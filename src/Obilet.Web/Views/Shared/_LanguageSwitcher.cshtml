@@ -1,0 +1,49 @@
+@using System.Globalization
+@using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.Extensions.Localization
+@using Obilet.Application.Localization
+@using Obilet.Web
+@inject IStringLocalizer<SharedResource> L
+@{
+    var currentCulture = MarketLocale.FromCulture(CultureInfo.CurrentUICulture);
+
+    // Dönüş adresinden culture parametresi ayıklanır. Sorgu dizesi
+    // çözümleyicisi çerezden önce çalıştığı için, adreste kalan bir
+    // ?culture=... değeri yeni seçimi anında geçersiz kılardı.
+    var query = QueryHelpers.ParseQuery(Context.Request.QueryString.Value ?? string.Empty);
+    var preservedQuery = query
+        .Where(pair => !string.Equals(pair.Key, "culture", StringComparison.OrdinalIgnoreCase))
+        .SelectMany(pair => pair.Value.Select(value => new KeyValuePair<string, string?>(pair.Key, value)));
+
+    var returnUrl = QueryHelpers.AddQueryString(Context.Request.Path, preservedQuery);
+
+    var languages = new[]
+    {
+        (Code: MarketLocale.Turkish, Name: L["Culture_Turkish"].Value),
+        (Code: MarketLocale.English, Name: L["Culture_English"].Value),
+    };
+}
+
+@*
+    Dil değiştirici alt kısımda duruyor. Şartnamedeki üst çubuk boş ve sefer
+    sayfası kendi başlığını getirdiği için, her iki sayfada da görünen ve
+    tasarımla çakışmayan tek yer burası.
+*@
+<form asp-controller="Culture" asp-action="Set" method="post"
+      class="d-inline-flex align-items-center gap-2">
+    <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+    <span class="text-muted">@L["Culture_Label"]:</span>
+
+    @foreach (var language in languages)
+    {
+        var isCurrent = string.Equals(language.Code, currentCulture, StringComparison.OrdinalIgnoreCase);
+
+        <button type="submit" name="culture" value="@language.Code"
+                class="btn btn-link btn-sm p-0 text-decoration-none @(isCurrent ? "fw-semibold" : "text-muted")"
+                aria-current="@(isCurrent ? "true" : "false")"
+                @(isCurrent ? "disabled" : null)>
+            @language.Name
+        </button>
+    }
+</form>
