@@ -8,7 +8,9 @@
 @{
     ViewData["Title"] = L["Search_Title"].Value;
 
-    var minDate = Model.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+    var today = Model.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+    var tomorrow = Model.Today.AddDays(1).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+    var selectedDate = Model.DepartureDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
     var minQueryLength = ILocationService.MinimumQueryLength;
 }
 
@@ -21,12 +23,17 @@
         /* Tom Select'in yüksekliğini Bootstrap form-control ile eşitler. */
         .ts-wrapper.form-select { padding: 0; height: auto; }
         .ts-control { border: 0; box-shadow: none; }
+
+        /* Takas butonu iki alanın arasında durur. Tasarım şartnamesinde
+           dairesel ve alanların dikişinde; masaüstünde alanlar yatay
+           dizildiği için burada aralarında konumlanıyor. */
+        .swap-button { width: 2.5rem; height: 2.5rem; border-radius: 50%; line-height: 1; }
     </style>
 }
 
 @*
     Arama formu. Kalkış ve varış alanları sunucu destekli metin aramasıyla
-    çalışıyor; takas butonu, tarih çipleri ve tasarım sonraki adımların işidir.
+    çalışıyor; tasarım geçişi sonraki adımın işi.
 *@
 
 <h1 class="h4 mb-3">@L["Search_Title"]</h1>
@@ -44,7 +51,11 @@ else
     <div asp-validation-summary="All" id="validation-summary"
          class="alert alert-danger @(ViewData.ModelState.IsValid ? "d-none" : string.Empty)"></div>
 
-    <form asp-controller="Home" asp-action="Search" method="post" class="row g-3" id="search-form" novalidate>
+    @* Kaydedilmiş tarih eskimişse kullanıcıya bilgi verilir; değer sessizce
+       altından değiştirilmez. *@
+    <div class="alert alert-info d-none" id="date-adjusted-notice">@L["Search_DateAdjusted"]</div>
+
+    <form asp-controller="Home" asp-action="Search" method="post" class="row g-3 align-items-end" id="search-form" novalidate>
         <div class="col-12 col-md-4">
             <label asp-for="OriginId" class="form-label">@L["Search_Origin"]</label>
             <select asp-for="OriginId" class="form-select" id="origin" data-location-select>
@@ -54,6 +65,13 @@ else
                 }
             </select>
             <span asp-validation-for="OriginId" class="text-danger small"></span>
+        </div>
+
+        <div class="col-auto">
+            <button type="button" class="btn btn-outline-secondary swap-button" id="swap"
+                    title="@L["Search_Swap"]" aria-label="@L["Search_Swap"]">
+                &#8646;
+            </button>
         </div>
 
         <div class="col-12 col-md-4">
@@ -67,17 +85,26 @@ else
             <span asp-validation-for="DestinationId" class="text-danger small"></span>
         </div>
 
-        <div class="col-12 col-md-4">
+        <div class="col-12">
             <label asp-for="DepartureDate" class="form-label">@L["Search_Date"]</label>
-            @*
-                type="date" her zaman ISO biçimi (yyyy-MM-dd) gönderir, bu
-                yüzden kültüre bağlı ayrıştırma sorunu oluşmaz. min özniteliği
-                tarayıcı seviyesinde geçmiş tarihi engeller; aynı kural
-                sunucuda da uygulanıyor, çünkü bu yalnızca bir kolaylık.
-            *@
-            <input asp-for="DepartureDate" type="date" class="form-control" id="departure-date"
-                   min="@minDate"
-                   value="@Model.DepartureDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)" />
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                @*
+                    type="date" her zaman ISO biçimi (yyyy-MM-dd) gönderir, bu
+                    yüzden kültüre bağlı ayrıştırma sorunu oluşmaz. min özniteliği
+                    tarayıcı seviyesinde geçmiş tarihi engeller; aynı kural
+                    sunucuda da uygulanıyor, çünkü bu yalnızca bir kolaylık.
+                *@
+                <input asp-for="DepartureDate" type="date" class="form-control" id="departure-date"
+                       style="max-width: 14rem"
+                       min="@today" value="@selectedDate" />
+
+                @* Hızlı seçim çipleri. Şartname varsayılanın yarın olmasını
+                   istiyor, bu yüzden ilk yüklemede Yarın seçili görünür. *@
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="chip-today"
+                        data-date="@today">@L["Search_Today"]</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="chip-tomorrow"
+                        data-date="@tomorrow">@L["Search_Tomorrow"]</button>
+            </div>
             <span asp-validation-for="DepartureDate" class="text-danger small"></span>
         </div>
 
@@ -99,56 +126,36 @@ else
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/js/tom-select.complete.min.js"></script>
+    <script src="~/js/search-form.js" asp-append-version="true"></script>
     <script>
         (function () {
+            const helpers = window.ObiletSearchForm;
+
             const config = {
                 minQueryLength: @minQueryLength,
                 searchUrl: '@Url.Action("Search", "Locations")',
+                today: '@today',
+                tomorrow: '@tomorrow',
                 messages: {
                     noResults: @Html.Raw(Json.Serialize(L["Search_NoResults"].Value)),
                     typeMore: @Html.Raw(Json.Serialize(L["Search_TypeMoreFormat", minQueryLength].Value)),
-                    placeholder: @Html.Raw(Json.Serialize(L["Search_Placeholder"].Value)),
                     sameLocation: @Html.Raw(Json.Serialize(L["Validation_SameLocation"].Value)),
                     pastDate: @Html.Raw(Json.Serialize(L["Validation_PastDate"].Value))
                 }
             };
 
-            // --- Türkçe'ye duyarlı katlama -----------------------------------
-            // Sunucudaki TurkishSearchText ile aynı kuralları uygular. İki
-            // yerde birden bulunmasının sebebi: sunucu API sonucunu süzüyor,
-            // istemci ise sayfa açılırken gelen varsayılan listeyi süzüyor.
-            // Kurallar ayrışırsa kullanıcı iki farklı davranış görür.
-            const turkishFoldMap = {
-                'İ': 'i', 'I': 'i', 'ı': 'i', 'i': 'i',
-                'Ş': 's', 'ş': 's', 'Ğ': 'g', 'ğ': 'g',
-                'Ç': 'c', 'ç': 'c', 'Ö': 'o', 'ö': 'o',
-                'Ü': 'u', 'ü': 'u', 'Â': 'a', 'â': 'a',
-                'Û': 'u', 'û': 'u', 'Ê': 'e', 'ê': 'e'
-            };
+            const form = document.getElementById('search-form');
+            if (!form || !helpers) return;
 
-            function foldTurkish(value) {
-                if (!value) return '';
-                let result = '';
-                let previousWasSpace = false;
-                for (const character of value) {
-                    let folded = turkishFoldMap[character];
-                    if (folded === undefined) {
-                        folded = /[\p{L}\p{N}]/u.test(character)
-                            ? character.toLowerCase()
-                            : ' ';
-                    }
-                    if (folded === ' ') {
-                        if (result.length > 0 && !previousWasSpace) {
-                            result += ' ';
-                            previousWasSpace = true;
-                        }
-                        continue;
-                    }
-                    result += folded;
-                    previousWasSpace = false;
-                }
-                return result.trimEnd();
-            }
+            const origin = document.getElementById('origin');
+            const destination = document.getElementById('destination');
+            const date = document.getElementById('departure-date');
+            const summary = document.getElementById('validation-summary');
+            const notice = document.getElementById('date-adjusted-notice');
+            const chips = {
+                today: document.getElementById('chip-today'),
+                tomorrow: document.getElementById('chip-tomorrow')
+            };
 
             // --- Aranabilir lokasyon alanları --------------------------------
             function createLocationSelect(element) {
@@ -169,17 +176,12 @@ else
                     loadThrottle: 300,
 
                     score: function (search) {
-                        const needle = foldTurkish(search);
+                        const needle = helpers.foldTurkish(search);
                         return function (item) {
                             if (!needle) return 1;
-
-                            // Sunucunun bu terim için döndürdüğü sonuçlar her
-                            // zaman gösterilir; süzmeyi zaten sunucu yaptı.
                             if (remoteMatchIds.has(String(item.id))) return 1;
 
-                            // Sayfayla birlikte gelen varsayılan seçenekler
-                            // sunucudaki aynı katlama kurallarıyla süzülür.
-                            return foldTurkish(item.name).indexOf(needle) !== -1 ? 1 : 0;
+                            return helpers.foldTurkish(item.name).indexOf(needle) !== -1 ? 1 : 0;
                         };
                     },
 
@@ -220,8 +222,99 @@ else
                 });
             }
 
-            for (const element of document.querySelectorAll('[data-location-select]')) {
-                createLocationSelect(element);
+            const selects = {
+                origin: createLocationSelect(origin),
+                destination: createLocationSelect(destination)
+            };
+
+            // --- Tarih çipleri ----------------------------------------------
+            function refreshChips() {
+                const active = helpers.activeDateChip(date.value, config.today, config.tomorrow);
+
+                for (const [name, button] of Object.entries(chips)) {
+                    const isActive = name === active;
+                    button.classList.toggle('btn-secondary', isActive);
+                    button.classList.toggle('btn-outline-secondary', !isActive);
+                    button.setAttribute('aria-pressed', String(isActive));
+                }
+            }
+
+            for (const button of Object.values(chips)) {
+                button.addEventListener('click', function () {
+                    date.value = button.dataset.date;
+                    refreshChips();
+                    showErrors(collectErrors());
+                });
+            }
+
+            date.addEventListener('change', refreshChips);
+
+            // --- Takas -------------------------------------------------------
+            document.getElementById('swap').addEventListener('click', function () {
+                const originItem = selects.origin.options[selects.origin.getValue()];
+                const destinationItem = selects.destination.options[selects.destination.getValue()];
+
+                if (!originItem || !destinationItem) return;
+
+                // Seçenek karşı alanda mevcut olmayabilir (metin aramasıyla
+                // seçilmiş olabilir), bu yüzden önce eklenir.
+                selects.origin.addOption(destinationItem);
+                selects.destination.addOption(originItem);
+
+                selects.origin.setValue(destinationItem.id, true);
+                selects.destination.setValue(originItem.id, true);
+
+                showErrors(collectErrors());
+            });
+
+            // --- Son aramanın geri yüklenmesi --------------------------------
+            const storage = (function () {
+                try {
+                    return window.localStorage;
+                } catch (error) {
+                    // Gizli sekmede veya site verisi kapalıyken erişim
+                    // istisna fırlatabilir; form yine çalışmalı.
+                    return null;
+                }
+            })();
+
+            function restoreLastSearch() {
+                const saved = helpers.readLastSearch(storage);
+                if (!saved) return;
+
+                for (const [field, select] of Object.entries(selects)) {
+                    const location = saved[field];
+                    if (!location) continue;
+
+                    // Ad da saklanıyor, çünkü kullanıcı varsayılan listede
+                    // olmayan bir lokasyon seçmiş olabilir ve seçeneğin
+                    // yeniden oluşturulması gerekir.
+                    select.addOption({ id: location.id, name: location.name || location.id });
+                    select.setValue(location.id, true);
+                }
+
+                const clamped = helpers.clampDepartureDate(saved.date, config.today);
+                if (clamped.date) {
+                    date.value = clamped.date;
+                }
+                if (clamped.wasClamped) {
+                    notice.classList.remove('d-none');
+                }
+            }
+
+            function persistLastSearch() {
+                const originItem = selects.origin.options[selects.origin.getValue()];
+                const destinationItem = selects.destination.options[selects.destination.getValue()];
+
+                helpers.writeLastSearch(storage, {
+                    origin: originItem
+                        ? { id: String(originItem.id), name: originItem.name }
+                        : null,
+                    destination: destinationItem
+                        ? { id: String(destinationItem.id), name: destinationItem.name }
+                        : null,
+                    date: date.value
+                });
             }
 
             // --- İstemci tarafı ayna doğrulama -------------------------------
@@ -229,33 +322,29 @@ else
             // kural sunucuda da uygulanıyor, çünkü sefer sayfası doğrudan
             // adresle açılabiliyor ve obilet API'si kuralların hiçbirini
             // güvenilir biçimde uygulamıyor.
-            const form = document.getElementById('search-form');
-            if (!form) return;
-
-            const origin = document.getElementById('origin');
-            const destination = document.getElementById('destination');
-            const date = document.getElementById('departure-date');
-            const summary = document.getElementById('validation-summary');
-
             function collectErrors() {
                 const errors = [];
+
                 if (origin.value === destination.value) {
                     errors.push(config.messages.sameLocation);
                 }
-                // Karşılaştırma ISO dizeleri üzerinden yapılıyor; yerel saat
-                // diliminde Date nesnesi kurmak gün kaymasına yol açabilir.
+                // Karşılaştırma ISO dizeleri üzerinden; yerel saat diliminde
+                // Date nesnesi kurmak gün kaymasına yol açabilir.
                 if (date.value && date.value < date.min) {
                     errors.push(config.messages.pastDate);
                 }
+
                 return errors;
             }
 
-            function show(errors) {
+            function showErrors(errors) {
                 summary.innerHTML = '';
+
                 if (errors.length === 0) {
                     summary.classList.add('d-none');
                     return;
                 }
+
                 const list = document.createElement('ul');
                 list.className = 'mb-0';
                 for (const message of errors) {
@@ -271,16 +360,21 @@ else
                 const errors = collectErrors();
                 if (errors.length > 0) {
                     event.preventDefault();
-                    show(errors);
+                    showErrors(errors);
+                    return;
                 }
+
+                persistLastSearch();
             });
 
-            // Kullanıcı düzeltmeye başladığında uyarıyı güncelle.
             for (const field of [origin, destination, date]) {
                 field.addEventListener('change', function () {
-                    show(collectErrors());
+                    showErrors(collectErrors());
                 });
             }
+
+            restoreLastSearch();
+            refreshChips();
         })();
     </script>
 }

@@ -101,6 +101,18 @@
   <data name="Search_Placeholder" xml:space="preserve">
     <value>Şehir veya ilçe yazın</value>
   </data>
+  <data name="Search_Today" xml:space="preserve">
+    <value>Bugün</value>
+  </data>
+  <data name="Search_Tomorrow" xml:space="preserve">
+    <value>Yarın</value>
+  </data>
+  <data name="Search_Swap" xml:space="preserve">
+    <value>Kalkış ve varış noktasını değiştir</value>
+  </data>
+  <data name="Search_DateAdjusted" xml:space="preserve">
+    <value>Son aramanızın tarihi geçmişte kaldığı için bugüne ayarlandı.</value>
+  </data>
 
   <!-- Doğrulama kuralları -->
   <data name="Validation_SameLocation" xml:space="preserve">
