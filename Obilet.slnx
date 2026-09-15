@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Obilet.Application/Obilet.Application.csproj" />
+    <Project Path="src/Obilet.Infrastructure/Obilet.Infrastructure.csproj" />
+    <Project Path="src/Obilet.Web/Obilet.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Obilet.Tests/Obilet.Tests.csproj" />
+  </Folder>
+</Solution>

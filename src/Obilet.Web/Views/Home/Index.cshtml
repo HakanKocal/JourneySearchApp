@@ -1,0 +1,53 @@
+@model LocationListViewModel
+@{
+    ViewData["Title"] = "Bus Location listesi";
+}
+
+@*
+    Bu görünüm bilinçli olarak sade. Amacı, obilet API'sinden gerçek veri
+    geldiğini kanıtlamak: Device Session oluşturuldu, kimlik doğrulandı,
+    kebab-case sözleşmesi çözüldü ve durum yorumlaması çalışıyor.
+    Arama formu ve tasarım sonraki adımların işidir.
+*@
+
+<h1 class="h4 mb-3">Bus Location listesi</h1>
+
+<p class="text-muted">
+    API'nin döndürdüğü sıra korunuyor. Varsayılan Origin ve Destination bu
+    sıranın ilk iki kaydından belirlenir.
+</p>
+
+@if (Model.Locations.Count == 0)
+{
+    <div class="alert alert-warning">
+        API hiç Bus Location döndürmedi.
+    </div>
+}
+else
+{
+    <p>
+        <strong>@Model.Locations.Count</strong> kayıt geldi.
+        Varsayılan Origin: <strong>@(Model.DefaultOrigin?.Name ?? "-")</strong>,
+        varsayılan Destination: <strong>@(Model.DefaultDestination?.Name ?? "-")</strong>.
+    </p>
+
+    <table class="table table-sm table-striped align-middle">
+        <thead>
+            <tr>
+                <th scope="col">Sıra</th>
+                <th scope="col">Id</th>
+                <th scope="col">Ad</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var location in Model.Locations)
+            {
+                <tr>
+                    <td>@(location.Rank?.ToString() ?? "-")</td>
+                    <td>@location.Id</td>
+                    <td>@location.Name</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
