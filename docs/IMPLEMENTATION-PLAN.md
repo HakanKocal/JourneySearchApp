@@ -17,6 +17,7 @@ Plan, canlı API üzerinde doğrulanmış yedi bulgu üzerine kuruludur. Bunlar 
 | 5 | Seferler sırasız geliyor ve ertesi güne taşıyor: 425 sefer / 3,2 MB, 53'ü ertesi gün 03:00'a kadar. |
 | 6 | API minimum tarih kuralını uygulamıyor (dünün tarihi `Success` + 150 sefer). Geçersiz lokasyon ID'si `InvalidLocation` değil, 0 sonuçlu `Success` veriyor. |
 | 7 | `language` bir pazar seçici. `en-US` → Türk pazarı İngilizce; `en-GB` → Britanya lokasyonları; **`en-EN` süresiz askıda kalıyor**; tanınmayan locale'ler de askıda kalıyor. |
+| 8 | API Cloudflare arkasında ve `GetSession` çağrısı **hız sınırlı**. Sınır aşıldığında `HTTP 429` ve `Retry-After: 3556` (~1 saat) dönüyor; gövde JSON değil, düz metin `error code: 1015`. Bu, ziyaretçi başına oturumun yeniden kullanılmasını bir optimizasyon değil **zorunluluk** yapıyor. |
 
 ## Çözüm yapısı
 

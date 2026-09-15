@@ -1,42 +1,53 @@
+@using System.Globalization
+@using Microsoft.Extensions.Localization
+@using Obilet.Application.Localization
+@using Obilet.Web
 @model LocationListViewModel
+@inject IStringLocalizer<SharedResource> L
 @{
-    ViewData["Title"] = "Bus Location listesi";
+    ViewData["Title"] = L["Locations_Title"].Value;
 }
 
 @*
     Bu görünüm bilinçli olarak sade. Amacı, obilet API'sinden gerçek veri
-    geldiğini kanıtlamak: Device Session oluşturuldu, kimlik doğrulandı,
-    kebab-case sözleşmesi çözüldü ve durum yorumlaması çalışıyor.
+    geldiğini ve arayüz metinlerinin kaynak dosyasından okunduğunu kanıtlamak.
     Arama formu ve tasarım sonraki adımların işidir.
 *@
 
-<h1 class="h4 mb-3">Bus Location listesi</h1>
+<h1 class="h4 mb-3">@L["Locations_Title"]</h1>
 
-<p class="text-muted">
-    API'nin döndürdüğü sıra korunuyor. Varsayılan Origin ve Destination bu
-    sıranın ilk iki kaydından belirlenir.
+<p class="text-muted">@L["Locations_OrderNote"]</p>
+
+@*
+    Kültür eşlemesinin çalıştığını gözle doğrulanabilir kılar: arayüz dili ile
+    API'ye giden pazar kodu ayrı kavramlardır ve ikisi bir beyaz listeyle
+    bağlanır. Tasarım adımında kaldırılacak geçici bir tanı satırıdır.
+*@
+<p class="small text-secondary">
+    @L["Culture_Current"]: <code>@CultureInfo.CurrentUICulture.Name</code>
+    &middot;
+    @L["Culture_MarketLocale"]: <code>@MarketLocale.FromCulture(CultureInfo.CurrentUICulture)</code>
 </p>
 
 @if (Model.Locations.Count == 0)
 {
-    <div class="alert alert-warning">
-        API hiç Bus Location döndürmedi.
-    </div>
+    <div class="alert alert-warning">@L["Locations_Empty"]</div>
 }
 else
 {
     <p>
-        <strong>@Model.Locations.Count</strong> kayıt geldi.
-        Varsayılan Origin: <strong>@(Model.DefaultOrigin?.Name ?? "-")</strong>,
-        varsayılan Destination: <strong>@(Model.DefaultDestination?.Name ?? "-")</strong>.
+        @L["Locations_CountFormat", Model.Locations.Count]
+        @L["Locations_DefaultsFormat",
+            Model.DefaultOrigin?.Name ?? "-",
+            Model.DefaultDestination?.Name ?? "-"]
     </p>
 
     <table class="table table-sm table-striped align-middle">
         <thead>
             <tr>
-                <th scope="col">Sıra</th>
-                <th scope="col">Id</th>
-                <th scope="col">Ad</th>
+                <th scope="col">@L["Table_Rank"]</th>
+                <th scope="col">@L["Table_Id"]</th>
+                <th scope="col">@L["Table_Name"]</th>
             </tr>
         </thead>
         <tbody>

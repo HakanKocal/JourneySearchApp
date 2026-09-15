@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Varsayılan (nötr) kaynak dosyası: Türkçe.
+
+    Uygulamanın varsayılan kültürü tr-TR olduğu için nötr dosya Türkçe
+    metinleri taşır. İngilizce karşılığı SharedResource.en-US.resx olarak
+    ayrı bir adımda eklenir.
+
+    Anahtarlar nötrdür; Türkçe metnin kendisi anahtar değildir.
+  -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <data name="App_Name" xml:space="preserve">
+    <value>obilet.com sefer arama</value>
+  </data>
+
+  <data name="Locations_Title" xml:space="preserve">
+    <value>Bus Location listesi</value>
+  </data>
+  <data name="Locations_OrderNote" xml:space="preserve">
+    <value>API'nin döndürdüğü sıra korunuyor. Varsayılan kalkış ve varış noktaları bu sıranın ilk iki kaydından belirlenir.</value>
+  </data>
+  <data name="Locations_Empty" xml:space="preserve">
+    <value>API hiç lokasyon döndürmedi.</value>
+  </data>
+  <data name="Locations_CountFormat" xml:space="preserve">
+    <value>{0} kayıt geldi.</value>
+    <comment>{0} = lokasyon sayısı</comment>
+  </data>
+  <data name="Locations_DefaultsFormat" xml:space="preserve">
+    <value>Varsayılan kalkış: {0}, varsayılan varış: {1}.</value>
+    <comment>{0} = origin adı, {1} = destination adı</comment>
+  </data>
+
+  <data name="Table_Rank" xml:space="preserve">
+    <value>Sıra</value>
+  </data>
+  <data name="Table_Id" xml:space="preserve">
+    <value>Id</value>
+  </data>
+  <data name="Table_Name" xml:space="preserve">
+    <value>Ad</value>
+  </data>
+
+  <data name="Culture_Current" xml:space="preserve">
+    <value>Geçerli dil</value>
+  </data>
+  <data name="Culture_MarketLocale" xml:space="preserve">
+    <value>API pazar kodu</value>
+  </data>
+</root>

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Obilet.Application.Abstractions;
 using Obilet.Application.Exceptions;
+using Obilet.Application.Localization;
 using Obilet.Application.Models;
 using Obilet.Infrastructure.Obilet.Contracts;
 
@@ -101,6 +102,12 @@ public sealed class ObiletApiClient : IObiletApiClient
     /// <summary>
     /// Oturum gerektiren isteklerin ortak gövdesini kurar.
     /// </summary>
+    /// <remarks>
+    /// Market Locale burada bir kez daha beyaz listeden geçirilir. Bu ikinci
+    /// savunma bilinçlidir: web katmanındaki kültür çözümlemesinde bir gedik
+    /// açılırsa, tanınmayan bir değerin API'ye ulaşması isteği süresiz askıda
+    /// bırakır. Tek satırlık maliyetle bütün bir arıza sınıfı kapanıyor.
+    /// </remarks>
     private static ObiletRequest<TData> BuildRequest<TData>(
         DeviceSession deviceSession,
         TData data,
@@ -113,7 +120,7 @@ public sealed class ObiletApiClient : IObiletApiClient
                 DeviceId = deviceSession.DeviceId,
             },
             Date = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"),
-            Language = marketLocale,
+            Language = MarketLocale.Normalize(marketLocale),
         };
 
     /// <summary>

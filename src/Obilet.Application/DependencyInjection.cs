@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Obilet.Application.Abstractions;
+using Obilet.Application.Localization;
 using Obilet.Application.Locations;
 using Obilet.Application.Sessions;
 
@@ -14,14 +15,17 @@ public static class DependencyInjection
     /// Uygulama servislerini kaydeder.
     /// </summary>
     /// <remarks>
-    /// Tümü <c>Scoped</c>: Device Session tek bir ziyaretçiye özeldir ve
-    /// istek ömrü boyunca aynı kalmalıdır.
+    /// Device Session'a bağlı olanlar <c>Scoped</c>: oturum tek bir
+    /// ziyaretçiye özeldir ve istek ömrü boyunca aynı kalmalıdır.
     /// </remarks>
     public static IServiceCollection AddObiletApplication(this IServiceCollection services)
     {
         services.AddScoped<IDeviceSessionAccessor, DeviceSessionAccessor>();
         services.AddScoped<IObiletCallExecutor, ObiletCallExecutor>();
         services.AddScoped<ILocationService, LocationService>();
+
+        // Durumsuz: yalnızca ambient kültürü okuyup beyaz listeden geçirir.
+        services.AddSingleton<IMarketLocaleResolver, MarketLocaleResolver>();
 
         return services;
     }
