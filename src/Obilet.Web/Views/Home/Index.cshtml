@@ -1,6 +1,7 @@
 @using System.Globalization
 @using Microsoft.Extensions.Localization
 @using Obilet.Application.Localization
+@using Obilet.Application.Locations
 @using Obilet.Web
 @model JourneySearchViewModel
 @inject IStringLocalizer<SharedResource> L
@@ -8,14 +9,24 @@
     ViewData["Title"] = L["Search_Title"].Value;
 
     var minDate = Model.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+    var minQueryLength = ILocationService.MinimumQueryLength;
+}
+
+@section Styles {
+    @* Aranabilir açılır liste. Kendi autocomplete'ini yazmak klavye
+       gezinmesi, ARIA rolleri, dışa tıklama ve yarış koşulları demek;
+       bunları doğru yapmak bu ödevin kapsamına göre orantısız. *@
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/css/tom-select.bootstrap5.min.css" />
+    <style>
+        /* Tom Select'in yüksekliğini Bootstrap form-control ile eşitler. */
+        .ts-wrapper.form-select { padding: 0; height: auto; }
+        .ts-control { border: 0; box-shadow: none; }
+    </style>
 }
 
 @*
-    Arama formu. Bu adımda kalkış ve varış alanları düz açılır listelerdir;
-    metin araması, takas butonu, tarih çipleri ve tasarım sonraki adımların
-    işidir. Form POST ediliyor ve başarılı doğrulamada sonuç sayfasına
-    yönlendirme yapılıyor, böylece sefer sayfası kendi paylaşılabilir
-    adresine sahip oluyor.
+    Arama formu. Kalkış ve varış alanları sunucu destekli metin aramasıyla
+    çalışıyor; takas butonu, tarih çipleri ve tasarım sonraki adımların işidir.
 *@
 
 <h1 class="h4 mb-3">@L["Search_Title"]</h1>
@@ -36,7 +47,7 @@ else
     <form asp-controller="Home" asp-action="Search" method="post" class="row g-3" id="search-form" novalidate>
         <div class="col-12 col-md-4">
             <label asp-for="OriginId" class="form-label">@L["Search_Origin"]</label>
-            <select asp-for="OriginId" class="form-select" id="origin">
+            <select asp-for="OriginId" class="form-select" id="origin" data-location-select>
                 @foreach (var location in Model.Locations)
                 {
                     <option value="@location.Id">@location.Name</option>
@@ -47,7 +58,7 @@ else
 
         <div class="col-12 col-md-4">
             <label asp-for="DestinationId" class="form-label">@L["Search_Destination"]</label>
-            <select asp-for="DestinationId" class="form-select" id="destination">
+            <select asp-for="DestinationId" class="form-select" id="destination" data-location-select>
                 @foreach (var location in Model.Locations)
                 {
                     <option value="@location.Id">@location.Name</option>
@@ -87,12 +98,137 @@ else
 </p>
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/js/tom-select.complete.min.js"></script>
     <script>
-        // İstemci tarafı ayna doğrulama: anında geri bildirim sağlar, ama bir
-        // koruma değildir. Aynı iki kural sunucuda da uygulanıyor, çünkü sefer
-        // sayfası doğrudan adresle açılabiliyor ve obilet API'si bu kuralların
-        // hiçbirini güvenilir biçimde uygulamıyor.
         (function () {
+            const config = {
+                minQueryLength: @minQueryLength,
+                searchUrl: '@Url.Action("Search", "Locations")',
+                messages: {
+                    noResults: @Html.Raw(Json.Serialize(L["Search_NoResults"].Value)),
+                    typeMore: @Html.Raw(Json.Serialize(L["Search_TypeMoreFormat", minQueryLength].Value)),
+                    placeholder: @Html.Raw(Json.Serialize(L["Search_Placeholder"].Value)),
+                    sameLocation: @Html.Raw(Json.Serialize(L["Validation_SameLocation"].Value)),
+                    pastDate: @Html.Raw(Json.Serialize(L["Validation_PastDate"].Value))
+                }
+            };
+
+            // --- Türkçe'ye duyarlı katlama -----------------------------------
+            // Sunucudaki TurkishSearchText ile aynı kuralları uygular. İki
+            // yerde birden bulunmasının sebebi: sunucu API sonucunu süzüyor,
+            // istemci ise sayfa açılırken gelen varsayılan listeyi süzüyor.
+            // Kurallar ayrışırsa kullanıcı iki farklı davranış görür.
+            const turkishFoldMap = {
+                'İ': 'i', 'I': 'i', 'ı': 'i', 'i': 'i',
+                'Ş': 's', 'ş': 's', 'Ğ': 'g', 'ğ': 'g',
+                'Ç': 'c', 'ç': 'c', 'Ö': 'o', 'ö': 'o',
+                'Ü': 'u', 'ü': 'u', 'Â': 'a', 'â': 'a',
+                'Û': 'u', 'û': 'u', 'Ê': 'e', 'ê': 'e'
+            };
+
+            function foldTurkish(value) {
+                if (!value) return '';
+                let result = '';
+                let previousWasSpace = false;
+                for (const character of value) {
+                    let folded = turkishFoldMap[character];
+                    if (folded === undefined) {
+                        folded = /[\p{L}\p{N}]/u.test(character)
+                            ? character.toLowerCase()
+                            : ' ';
+                    }
+                    if (folded === ' ') {
+                        if (result.length > 0 && !previousWasSpace) {
+                            result += ' ';
+                            previousWasSpace = true;
+                        }
+                        continue;
+                    }
+                    result += folded;
+                    previousWasSpace = false;
+                }
+                return result.trimEnd();
+            }
+
+            // --- Aranabilir lokasyon alanları --------------------------------
+            function createLocationSelect(element) {
+                // Sunucunun geçerli terim için döndürdüğü kimlikler. Ayrı
+                // tutulması zorunlu: sunucu eşleşmelerinin bir kısmı API'nin
+                // anahtar kelime alanından geliyor ve istemci o alanı görmüyor.
+                // Örneğin "esenler" araması "İstanbul Avrupa" döndürüyor;
+                // yalnızca ada bakan bir süzgeç bu sonucu elerdi.
+                let remoteMatchIds = new Set();
+
+                return new TomSelect(element, {
+                    valueField: 'id',
+                    labelField: 'name',
+                    searchField: ['name'],
+                    maxOptions: 20,
+                    create: false,
+                    // Tom Select'in yerleşik gecikmesi; her tuşta istek atmaz.
+                    loadThrottle: 300,
+
+                    score: function (search) {
+                        const needle = foldTurkish(search);
+                        return function (item) {
+                            if (!needle) return 1;
+
+                            // Sunucunun bu terim için döndürdüğü sonuçlar her
+                            // zaman gösterilir; süzmeyi zaten sunucu yaptı.
+                            if (remoteMatchIds.has(String(item.id))) return 1;
+
+                            // Sayfayla birlikte gelen varsayılan seçenekler
+                            // sunucudaki aynı katlama kurallarıyla süzülür.
+                            return foldTurkish(item.name).indexOf(needle) !== -1 ? 1 : 0;
+                        };
+                    },
+
+                    shouldLoad: function (query) {
+                        return query.trim().length >= config.minQueryLength;
+                    },
+
+                    load: function (query, callback) {
+                        fetch(config.searchUrl + '?q=' + encodeURIComponent(query), {
+                            headers: { 'Accept': 'application/json' }
+                        })
+                            .then(function (response) {
+                                return response.ok ? response.json() : [];
+                            })
+                            .then(function (results) {
+                                remoteMatchIds = new Set(
+                                    results.map(function (item) { return String(item.id); }));
+                                callback(results);
+                            })
+                            // Ağ hatası açılır listeyi kilitlememeli.
+                            .catch(function () {
+                                remoteMatchIds = new Set();
+                                callback();
+                            });
+                    },
+
+                    render: {
+                        no_results: function (data) {
+                            const text = data.input.trim().length < config.minQueryLength
+                                ? config.messages.typeMore
+                                : config.messages.noResults;
+                            const div = document.createElement('div');
+                            div.className = 'no-results px-2 py-1 text-muted small';
+                            div.textContent = text;
+                            return div;
+                        }
+                    }
+                });
+            }
+
+            for (const element of document.querySelectorAll('[data-location-select]')) {
+                createLocationSelect(element);
+            }
+
+            // --- İstemci tarafı ayna doğrulama -------------------------------
+            // Anında geri bildirim sağlar, ama bir koruma değildir. Aynı iki
+            // kural sunucuda da uygulanıyor, çünkü sefer sayfası doğrudan
+            // adresle açılabiliyor ve obilet API'si kuralların hiçbirini
+            // güvenilir biçimde uygulamıyor.
             const form = document.getElementById('search-form');
             if (!form) return;
 
@@ -101,10 +237,18 @@ else
             const date = document.getElementById('departure-date');
             const summary = document.getElementById('validation-summary');
 
-            const messages = {
-                sameLocation: @Html.Raw(Json.Serialize(L["Validation_SameLocation"].Value)),
-                pastDate: @Html.Raw(Json.Serialize(L["Validation_PastDate"].Value))
-            };
+            function collectErrors() {
+                const errors = [];
+                if (origin.value === destination.value) {
+                    errors.push(config.messages.sameLocation);
+                }
+                // Karşılaştırma ISO dizeleri üzerinden yapılıyor; yerel saat
+                // diliminde Date nesnesi kurmak gün kaymasına yol açabilir.
+                if (date.value && date.value < date.min) {
+                    errors.push(config.messages.pastDate);
+                }
+                return errors;
+            }
 
             function show(errors) {
                 summary.innerHTML = '';
@@ -123,19 +267,6 @@ else
                 summary.classList.remove('d-none');
             }
 
-            function collectErrors() {
-                const errors = [];
-                if (origin.value === destination.value) {
-                    errors.push(messages.sameLocation);
-                }
-                // Karşılaştırma ISO dizeleri üzerinden yapılıyor; yerel saat
-                // diliminde Date nesnesi kurmak gün kaymasına yol açabilir.
-                if (date.value && date.value < date.min) {
-                    errors.push(messages.pastDate);
-                }
-                return errors;
-            }
-
             form.addEventListener('submit', function (event) {
                 const errors = collectErrors();
                 if (errors.length > 0) {
@@ -144,10 +275,10 @@ else
                 }
             });
 
-            // Kullanıcı düzeltmeye başladığında uyarıyı temizle.
+            // Kullanıcı düzeltmeye başladığında uyarıyı güncelle.
             for (const field of [origin, destination, date]) {
                 field.addEventListener('change', function () {
-                    show(collectErrors().length > 0 ? collectErrors() : []);
+                    show(collectErrors());
                 });
             }
         })();

@@ -22,12 +22,26 @@ internal sealed class FakeObiletApiClient : IObiletApiClient
             $"device-{CreateSessionCallCount}"));
     }
 
+    /// <summary>Lokasyon çağrısının döndüreceği liste.</summary>
+    public IReadOnlyList<BusLocation> Locations { get; set; } = [];
+
+    /// <summary>Lokasyon çağrısı kaç kez yapıldı.</summary>
+    public int LocationCallCount { get; private set; }
+
+    /// <summary>Lokasyon çağrısına geçirilen son arama terimi.</summary>
+    public string? LastLocationQuery { get; private set; }
+
     public Task<IReadOnlyList<BusLocation>> GetBusLocationsAsync(
         DeviceSession deviceSession,
         string? query,
         string marketLocale,
         CancellationToken cancellationToken = default)
-        => Task.FromResult<IReadOnlyList<BusLocation>>([]);
+    {
+        LocationCallCount++;
+        LastLocationQuery = query;
+
+        return Task.FromResult(Locations);
+    }
 
     /// <summary>Sefer aramasının döndüreceği liste.</summary>
     public IReadOnlyList<Journey> Journeys { get; set; } = [];

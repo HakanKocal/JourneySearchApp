@@ -25,6 +25,36 @@ public sealed class LocationService : ILocationService
         _cache = cache;
     }
 
+    public async Task<IReadOnlyList<BusLocation>> SearchAsync(
+        string? query,
+        CancellationToken cancellationToken = default)
+    {
+        var trimmed = query?.Trim() ?? string.Empty;
+
+        // Çok kısa terimler için API'ye hiç gitmiyoruz: tek harf neredeyse
+        // her şeyi eşleştiriyor, dolayısıyla kullanıcıya yardımcı olmuyor.
+        if (trimmed.Length < ILocationService.MinimumQueryLength)
+        {
+            return [];
+        }
+
+        var marketLocale = _marketLocale.Resolve();
+
+        // Arama sonuçları bilinçli olarak önbelleklenmiyor: terim kuyruğu
+        // çok uzun, isabet oranı düşük ve her terim ayrı bir giriş açardı.
+        var results = await _executor.ExecuteAsync(
+            (session, ct) => _apiClient.GetBusLocationsAsync(
+                session,
+                query: trimmed,
+                marketLocale: marketLocale,
+                cancellationToken: ct),
+            cancellationToken);
+
+        // API anlamsız terimlerde boş liste yerine popüler lokasyonlara
+        // düşüyor; ilişkisiz doldurma kayıtları burada ayıklanıyor.
+        return LocationRelevance.Filter(results, trimmed);
+    }
+
     public Task<IReadOnlyList<BusLocation>> GetDefaultAsync(
         CancellationToken cancellationToken = default)
     {

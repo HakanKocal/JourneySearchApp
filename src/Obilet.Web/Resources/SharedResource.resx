@@ -91,6 +91,16 @@
   <data name="Search_NoLocations" xml:space="preserve">
     <value>Lokasyon listesi alınamadı. Lütfen daha sonra tekrar deneyin.</value>
   </data>
+  <data name="Search_NoResults" xml:space="preserve">
+    <value>Sonuç bulunamadı.</value>
+  </data>
+  <data name="Search_TypeMoreFormat" xml:space="preserve">
+    <value>Aramak için en az {0} karakter yazın.</value>
+    <comment>{0} = minimum karakter sayısı</comment>
+  </data>
+  <data name="Search_Placeholder" xml:space="preserve">
+    <value>Şehir veya ilçe yazın</value>
+  </data>
 
   <!-- Doğrulama kuralları -->
   <data name="Validation_SameLocation" xml:space="preserve">
