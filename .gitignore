@@ -33,6 +33,9 @@ appsettings.*.local.json
 secrets.json
 *.pfx
 
+## Dahili ticket iskelesi — teslim edilen ödevin parçası değil
+.scratch/
+
 ## OS
 Thumbs.db
 ehthumbs.db
