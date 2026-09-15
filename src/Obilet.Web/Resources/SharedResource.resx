@@ -92,6 +92,14 @@
     <value>Lokasyon listesi alınamadı. Lütfen daha sonra tekrar deneyin.</value>
   </data>
 
+  <!-- Doğrulama kuralları -->
+  <data name="Validation_SameLocation" xml:space="preserve">
+    <value>Kalkış ve varış noktası aynı olamaz.</value>
+  </data>
+  <data name="Validation_PastDate" xml:space="preserve">
+    <value>Geçmiş bir tarih için sefer aranamaz. En erken bugünü seçebilirsiniz.</value>
+  </data>
+
   <!-- Sefer listesi -->
   <data name="Journey_Back" xml:space="preserve">
     <value>Geri</value>

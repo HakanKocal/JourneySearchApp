@@ -31,6 +31,16 @@ public sealed class JourneySearchViewModel
     public IReadOnlyList<BusLocation> Locations { get; init; } = [];
 
     /// <summary>
+    /// Bugünün tarihi; seçilebilecek en erken gün.
+    /// </summary>
+    /// <remarks>
+    /// Tarih alanının <c>min</c> özniteliğini beslemek için view'a taşınır.
+    /// Bu yalnızca bir kolaylıktır, koruma değil: aynı kural sunucu tarafında
+    /// da uygulanır, çünkü sefer sayfası doğrudan adresle açılabiliyor.
+    /// </remarks>
+    public DateOnly Today { get; init; }
+
+    /// <summary>
     /// Formun ilk gösteriminde kullanılacak varsayılanları üretir.
     /// </summary>
     /// <param name="locations">API sırasını koruyan Bus Location listesi.</param>
@@ -40,6 +50,7 @@ public sealed class JourneySearchViewModel
         DateOnly today) => new()
         {
             Locations = locations,
+            Today = today,
             OriginId = locations.Count > 0 ? locations[0].Id : 0,
             DestinationId = locations.Count > 1 ? locations[1].Id : 0,
 

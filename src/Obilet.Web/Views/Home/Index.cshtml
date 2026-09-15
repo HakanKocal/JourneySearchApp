@@ -6,13 +6,16 @@
 @inject IStringLocalizer<SharedResource> L
 @{
     ViewData["Title"] = L["Search_Title"].Value;
+
+    var minDate = Model.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 }
 
 @*
     Arama formu. Bu adımda kalkış ve varış alanları düz açılır listelerdir;
     metin araması, takas butonu, tarih çipleri ve tasarım sonraki adımların
-    işidir. Form POST ediliyor ve sonuç sayfasına yönlendirme yapılıyor,
-    böylece sefer sayfası kendi paylaşılabilir adresine sahip oluyor.
+    işidir. Form POST ediliyor ve başarılı doğrulamada sonuç sayfasına
+    yönlendirme yapılıyor, böylece sefer sayfası kendi paylaşılabilir
+    adresine sahip oluyor.
 *@
 
 <h1 class="h4 mb-3">@L["Search_Title"]</h1>
@@ -23,36 +26,48 @@
 }
 else
 {
-    <form asp-controller="Home" asp-action="Search" method="post" class="row g-3">
+    @*
+        Doğrulama özeti. Sunucudan hata geldiyse görünür başlar; aksi hâlde
+        gizli durur ve istemci tarafı ayna doğrulama gerektiğinde açar.
+    *@
+    <div asp-validation-summary="All" id="validation-summary"
+         class="alert alert-danger @(ViewData.ModelState.IsValid ? "d-none" : string.Empty)"></div>
+
+    <form asp-controller="Home" asp-action="Search" method="post" class="row g-3" id="search-form" novalidate>
         <div class="col-12 col-md-4">
             <label asp-for="OriginId" class="form-label">@L["Search_Origin"]</label>
-            <select asp-for="OriginId" class="form-select">
+            <select asp-for="OriginId" class="form-select" id="origin">
                 @foreach (var location in Model.Locations)
                 {
                     <option value="@location.Id">@location.Name</option>
                 }
             </select>
+            <span asp-validation-for="OriginId" class="text-danger small"></span>
         </div>
 
         <div class="col-12 col-md-4">
             <label asp-for="DestinationId" class="form-label">@L["Search_Destination"]</label>
-            <select asp-for="DestinationId" class="form-select">
+            <select asp-for="DestinationId" class="form-select" id="destination">
                 @foreach (var location in Model.Locations)
                 {
                     <option value="@location.Id">@location.Name</option>
                 }
             </select>
+            <span asp-validation-for="DestinationId" class="text-danger small"></span>
         </div>
 
         <div class="col-12 col-md-4">
             <label asp-for="DepartureDate" class="form-label">@L["Search_Date"]</label>
             @*
-                Tarayıcının yerel tarih seçicisi kullanılıyor. type="date"
-                her zaman ISO biçimi (yyyy-MM-dd) gönderir, dolayısıyla
-                kültüre bağlı ayrıştırma sorunu oluşmaz.
+                type="date" her zaman ISO biçimi (yyyy-MM-dd) gönderir, bu
+                yüzden kültüre bağlı ayrıştırma sorunu oluşmaz. min özniteliği
+                tarayıcı seviyesinde geçmiş tarihi engeller; aynı kural
+                sunucuda da uygulanıyor, çünkü bu yalnızca bir kolaylık.
             *@
-            <input asp-for="DepartureDate" type="date" class="form-control"
+            <input asp-for="DepartureDate" type="date" class="form-control" id="departure-date"
+                   min="@minDate"
                    value="@Model.DepartureDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)" />
+            <span asp-validation-for="DepartureDate" class="text-danger small"></span>
         </div>
 
         <div class="col-12">
@@ -70,3 +85,71 @@ else
     &middot;
     @L["Culture_MarketLocale"]: <code>@MarketLocale.FromCulture(CultureInfo.CurrentUICulture)</code>
 </p>
+
+@section Scripts {
+    <script>
+        // İstemci tarafı ayna doğrulama: anında geri bildirim sağlar, ama bir
+        // koruma değildir. Aynı iki kural sunucuda da uygulanıyor, çünkü sefer
+        // sayfası doğrudan adresle açılabiliyor ve obilet API'si bu kuralların
+        // hiçbirini güvenilir biçimde uygulamıyor.
+        (function () {
+            const form = document.getElementById('search-form');
+            if (!form) return;
+
+            const origin = document.getElementById('origin');
+            const destination = document.getElementById('destination');
+            const date = document.getElementById('departure-date');
+            const summary = document.getElementById('validation-summary');
+
+            const messages = {
+                sameLocation: @Html.Raw(Json.Serialize(L["Validation_SameLocation"].Value)),
+                pastDate: @Html.Raw(Json.Serialize(L["Validation_PastDate"].Value))
+            };
+
+            function show(errors) {
+                summary.innerHTML = '';
+                if (errors.length === 0) {
+                    summary.classList.add('d-none');
+                    return;
+                }
+                const list = document.createElement('ul');
+                list.className = 'mb-0';
+                for (const message of errors) {
+                    const item = document.createElement('li');
+                    item.textContent = message;
+                    list.appendChild(item);
+                }
+                summary.appendChild(list);
+                summary.classList.remove('d-none');
+            }
+
+            function collectErrors() {
+                const errors = [];
+                if (origin.value === destination.value) {
+                    errors.push(messages.sameLocation);
+                }
+                // Karşılaştırma ISO dizeleri üzerinden yapılıyor; yerel saat
+                // diliminde Date nesnesi kurmak gün kaymasına yol açabilir.
+                if (date.value && date.value < date.min) {
+                    errors.push(messages.pastDate);
+                }
+                return errors;
+            }
+
+            form.addEventListener('submit', function (event) {
+                const errors = collectErrors();
+                if (errors.length > 0) {
+                    event.preventDefault();
+                    show(errors);
+                }
+            });
+
+            // Kullanıcı düzeltmeye başladığında uyarıyı temizle.
+            for (const field of [origin, destination, date]) {
+                field.addEventListener('change', function () {
+                    show(collectErrors().length > 0 ? collectErrors() : []);
+                });
+            }
+        })();
+    </script>
+}

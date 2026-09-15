@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
+using Obilet.Application.Journeys;
 using Obilet.Application.Locations;
 using Obilet.Web.Models;
+using Obilet.Web.Validation;
 
 namespace Obilet.Web.Controllers;
 
@@ -9,12 +12,22 @@ namespace Obilet.Web.Controllers;
 /// </summary>
 public sealed class HomeController : Controller
 {
+    /// <summary>
+    /// Sefer sayfasından yönlendirilen doğrulama hatasının taşındığı anahtar.
+    /// </summary>
+    public const string SearchErrorTempDataKey = "SearchErrorKeys";
+
     private readonly ILocationService _locationService;
+    private readonly IStringLocalizer<SharedResource> _localizer;
     private readonly TimeProvider _timeProvider;
 
-    public HomeController(ILocationService locationService, TimeProvider timeProvider)
+    public HomeController(
+        ILocationService locationService,
+        IStringLocalizer<SharedResource> localizer,
+        TimeProvider timeProvider)
     {
         _locationService = locationService;
+        _localizer = localizer;
         _timeProvider = timeProvider;
     }
 
@@ -24,27 +37,52 @@ public sealed class HomeController : Controller
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
         var locations = await _locationService.GetDefaultAsync(cancellationToken);
+        var model = JourneySearchViewModel.CreateDefault(locations, Today());
 
-        return View(JourneySearchViewModel.CreateDefault(locations, Today()));
+        // Sefer sayfasının adresi elle yazılıp doğrulamaya takıldıysa, hata
+        // buraya taşınmış olur ve formun yanında gösterilir.
+        RestoreErrorsFromTempData();
+
+        return View(model);
     }
 
     /// <summary>
-    /// Aramayı alır ve kullanıcıyı sefer sayfasına yönlendirir.
+    /// Aramayı alır, doğrular ve kullanıcıyı sefer sayfasına yönlendirir.
     /// </summary>
     /// <remarks>
-    /// Form POST ediliyor, ancak sonuç sayfasına <see cref="RedirectToAction"/>
-    /// ile gidiliyor. Böylece sefer sayfası kendi adresine sahip olur:
-    /// yenilenebilir, paylaşılabilir ve geri tuşu beklendiği gibi çalışır.
-    /// Sonucu doğrudan POST yanıtında render etmek bunların üçünü de bozardı.
-    ///
-    /// Doğrulama kuralları bu adımda henüz uygulanmıyor; sefer sayfası
-    /// doğrudan adresle de açılabildiği için doğrulamanın her iki girişte
-    /// birlikte ele alınması gerekiyor.
+    /// Doğrulama geçerse sonuç sayfasına <see cref="RedirectToAction"/> ile
+    /// gidilir. Böylece sefer sayfası kendi adresine sahip olur: yenilenebilir,
+    /// paylaşılabilir ve geri tuşu beklendiği gibi çalışır. Sonucu doğrudan
+    /// POST yanıtında render etmek bunların üçünü de bozardı.
     /// </remarks>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Search(JourneySearchViewModel form)
+    public async Task<IActionResult> Search(
+        JourneySearchViewModel form,
+        CancellationToken cancellationToken)
     {
+        var errors = SearchQueryValidator.Validate(
+            form.OriginId, form.DestinationId, form.DepartureDate, Today());
+
+        if (errors.Count > 0)
+        {
+            // Formu hatalarıyla birlikte yeniden gösteriyoruz. Lokasyon
+            // listesi POST gövdesinde taşınmadığı için yeniden yüklenir;
+            // bu çağrı önbelleklidir, ek API isteği getirmez.
+            AddModelErrors(errors);
+
+            var locations = await _locationService.GetDefaultAsync(cancellationToken);
+
+            return View(nameof(Index), new JourneySearchViewModel
+            {
+                Locations = locations,
+                Today = Today(),
+                OriginId = form.OriginId,
+                DestinationId = form.DestinationId,
+                DepartureDate = form.DepartureDate,
+            });
+        }
+
         return RedirectToAction(
             nameof(JourneyController.Index),
             "Journey",
@@ -61,6 +99,45 @@ public sealed class HomeController : Controller
     {
         RequestId = HttpContext.TraceIdentifier,
     });
+
+    /// <summary>
+    /// Kural ihlallerini ilgili form alanlarına bağlar.
+    /// </summary>
+    private void AddModelErrors(IEnumerable<SearchQueryError> errors)
+    {
+        foreach (var error in errors)
+        {
+            ModelState.AddModelError(
+                SearchQueryErrorMessages.FieldFor(error),
+                _localizer[SearchQueryErrorMessages.ResourceKeyFor(error)]);
+        }
+    }
+
+    /// <summary>
+    /// Sefer sayfasından taşınan hata anahtarlarını forma bağlar.
+    /// </summary>
+    /// <remarks>
+    /// Taşınan şey metin değil <b>anahtar</b>: kullanıcı iki istek arasında
+    /// dil değiştirirse mesaj yine doğru dilde görünsün.
+    /// </remarks>
+    private void RestoreErrorsFromTempData()
+    {
+        if (TempData[SearchErrorTempDataKey] is not string packedKeys
+            || string.IsNullOrWhiteSpace(packedKeys))
+        {
+            return;
+        }
+
+        foreach (var name in packedKeys.Split(',', StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (Enum.TryParse<SearchQueryError>(name, out var error))
+            {
+                ModelState.AddModelError(
+                    SearchQueryErrorMessages.FieldFor(error),
+                    _localizer[SearchQueryErrorMessages.ResourceKeyFor(error)]);
+            }
+        }
+    }
 
     /// <remarks>
     /// <see cref="TimeProvider"/> üzerinden okunur; <c>DateTime.Today</c>

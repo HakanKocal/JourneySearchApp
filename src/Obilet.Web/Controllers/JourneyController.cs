@@ -22,13 +22,16 @@ public sealed class JourneyController : Controller
 
     private readonly IJourneyService _journeyService;
     private readonly ILocationService _locationService;
+    private readonly TimeProvider _timeProvider;
 
     public JourneyController(
         IJourneyService journeyService,
-        ILocationService locationService)
+        ILocationService locationService,
+        TimeProvider timeProvider)
     {
         _journeyService = journeyService;
         _locationService = locationService;
+        _timeProvider = timeProvider;
     }
 
     /// <summary>
@@ -51,6 +54,23 @@ public sealed class JourneyController : Controller
                 DateTimeStyles.None,
                 out var departureDate))
         {
+            return RedirectToAction(nameof(HomeController.Index), "Home");
+        }
+
+        // Bu sayfa doğrudan adresle açılabildiği için doğrulama burada da
+        // uygulanır. Formu atlayıp geçmiş bir tarih yazan biri engellenmeli:
+        // API bu kuralı uygulamıyor ve geçmiş tarihli sorguya sonuç döndürüyor.
+        var errors = SearchQueryValidator.Validate(
+            originId, destinationId, departureDate, Today());
+
+        if (errors.Count > 0)
+        {
+            // Hatalar arama formuna taşınır; kullanıcı sorunu düzeltebileceği
+            // yere gönderilir. Taşınan şey metin değil kural adı, böylece
+            // mesaj isteği karşılayan kültürde üretilir.
+            TempData[HomeController.SearchErrorTempDataKey] =
+                string.Join(',', errors.Select(error => error.ToString()));
+
             return RedirectToAction(nameof(HomeController.Index), "Home");
         }
 
@@ -79,4 +99,11 @@ public sealed class JourneyController : Controller
         IEnumerable<Application.Models.BusLocation> locations,
         int id) =>
         locations.FirstOrDefault(location => location.Id == id)?.Name;
+
+    /// <remarks>
+    /// <see cref="TimeProvider"/> üzerinden okunur; <c>DateTime.Today</c>
+    /// doğrudan kullanıldığında tarihe bağlı davranış test edilemez hâle gelir.
+    /// </remarks>
+    private DateOnly Today() =>
+        DateOnly.FromDateTime(_timeProvider.GetLocalNow().DateTime);
 }
