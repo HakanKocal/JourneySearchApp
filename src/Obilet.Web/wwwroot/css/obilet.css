@@ -1,0 +1,315 @@
+/*
+ * obilet.com sefer arama — görsel dil.
+ *
+ * Renkler ve ölçüler, ödevle verilen Adobe XD tasarım şartnamesinden
+ * alınmıştır. Şartname 320x568 boyutunda bir mobil tasarımdır ve masaüstü
+ * karşılığı yoktur; bu yüzden arayüz mobil-öncelikli kurulup masaüstünde
+ * yatay düzene genişler. Gerekçe için bkz. docs/adr/0005.
+ *
+ * Şartname birebir uygulanmıyor — gereksinim de bunu istemiyor — ancak
+ * düzen, palet ve bileşen yerleşimi tanınabilir olmalı.
+ */
+
+:root {
+    /* Birincil marka mavisi: başlık çubukları, alan etiketleri, ana buton. */
+    --obilet-blue: #2F4EB4;
+    --obilet-blue-dark: #27409A;
+
+    /* Fiyat etiketi kırmızısı. Canlı sitenin theme-color değeri de bu. */
+    --obilet-red: #D23B38;
+
+    /* Sefer saatleri ve mikro etiketler. */
+    --obilet-navy: #192289;
+    --obilet-label-blue: #3640B1;
+
+    /* Metin ve ikon grileri. */
+    --obilet-slate: #5D686E;
+    --obilet-dark-slate: #083145;
+    --obilet-icon-gray: #9D9D9C;
+
+    /* Zeminler ve kenarlıklar. */
+    --obilet-panel-bg: #F8F8F8;
+    --obilet-list-bg: #F3F3F3;
+    --obilet-card-edge: #EDEDED;
+    --obilet-card-border: #B4B4B4;
+
+    --obilet-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.10);
+    --obilet-header-shadow: 0 2px 4px rgba(0, 0, 0, 0.16);
+}
+
+body {
+    background-color: #FFFFFF;
+    color: var(--obilet-slate);
+}
+
+/* Yatay kaydırma 320px genişlikte de oluşmamalı. */
+html, body {
+    overflow-x: hidden;
+}
+
+/* --- Üst çubuk ------------------------------------------------------------ */
+/* Şartnamedeki üst çubuk boş: logo, menü veya metin taşımıyor. */
+.obilet-topbar {
+    background-color: var(--obilet-blue);
+    height: 40px;
+}
+
+/* --- Arama paneli -------------------------------------------------------- */
+.search-panel {
+    background-color: var(--obilet-panel-bg);
+    padding: 1.5rem 1rem 2rem;
+}
+
+.field-card {
+    background-color: #FFFFFF;
+    box-shadow: var(--obilet-card-shadow);
+    padding: 0.625rem 1rem;
+    border-radius: 2px;
+}
+
+.field-label {
+    color: var(--obilet-blue);
+    font-weight: 500;
+    font-size: 0.875rem;
+    margin-bottom: 0.125rem;
+}
+
+/* --- Kalkış / varış alanları ve takas butonu ----------------------------- */
+/*
+ * Şartnamede iki kart 3px aralıkla üst üste duruyor ve dairesel takas butonu
+ * aralarındaki dikişte, sağa yakın konumlanıyor. Mobilde bu yerleşim birebir
+ * korunuyor; masaüstünde alanlar yan yana gelince buton aralarına geçiyor.
+ */
+.location-fields {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.swap-button {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border-radius: 50%;
+    background-color: #FFFFFF;
+    border: 1px solid var(--obilet-icon-gray);
+    color: var(--obilet-slate);
+    line-height: 1;
+    font-size: 0.875rem;
+
+    /* Mobilde iki kartın dikişinde, sağa yakın. */
+    position: absolute;
+    right: 16px;
+    top: calc(50% - 14px);
+    z-index: 3;
+    box-shadow: var(--obilet-card-shadow);
+}
+
+.swap-button:hover,
+.swap-button:focus {
+    background-color: var(--obilet-panel-bg);
+    color: var(--obilet-blue);
+    border-color: var(--obilet-blue);
+}
+
+/* --- Tarih alanı ve hızlı seçim çipleri ---------------------------------- */
+.date-chip {
+    min-width: 56px;
+    font-size: 0.8125rem;
+    border-radius: 2px;
+    border: 1px solid var(--obilet-card-border);
+    background-color: #FFFFFF;
+    color: var(--obilet-dark-slate);
+    padding: 0.25rem 0.5rem;
+}
+
+/* Şartnamedeki seçili çip dolu gri; seçili olmayan beyaz ve çerçeveli. */
+.date-chip.is-active {
+    background-color: var(--obilet-slate);
+    border-color: var(--obilet-slate);
+    color: #FFFFFF;
+}
+
+/* --- Ana buton ----------------------------------------------------------- */
+/* Şartnamede buton tam genişlik değil, ortalanmış ve daha dar. */
+.btn-obilet {
+    background-color: var(--obilet-blue);
+    border-color: var(--obilet-blue);
+    color: #FFFFFF;
+    font-weight: 500;
+    font-size: 1.0625rem;
+    padding: 0.5rem 2rem;
+    border-radius: 2px;
+    min-width: 208px;
+}
+
+.btn-obilet:hover,
+.btn-obilet:focus {
+    background-color: var(--obilet-blue-dark);
+    border-color: var(--obilet-blue-dark);
+    color: #FFFFFF;
+}
+
+/* --- Sefer listesi ------------------------------------------------------- */
+.journey-page {
+    background-color: var(--obilet-list-bg);
+    min-height: 100vh;
+}
+
+.journey-header {
+    background-color: var(--obilet-blue);
+    box-shadow: var(--obilet-header-shadow);
+    color: #FFFFFF;
+    padding: 0.875rem 1rem;
+}
+
+.journey-header a {
+    color: #FFFFFF;
+    text-decoration: none;
+}
+
+.journey-header-title {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.journey-header-subtitle {
+    font-size: 0.9375rem;
+    opacity: 0.9;
+}
+
+/* Şartnamedeki kart: dikey gradyan, ince kenarlık, hafif gölge. */
+.journey-card {
+    background: linear-gradient(to bottom, var(--obilet-card-edge) 0%, #FFFFFF 48.8%, var(--obilet-card-edge) 100%);
+    border: 1px solid var(--obilet-card-border);
+    border-radius: 3px;
+    box-shadow: var(--obilet-card-shadow);
+    padding: 0.625rem 0.875rem;
+}
+
+/* KALKIŞ / VARIŞ mikro etiketleri: şartnamede 9px ve mavi. */
+.journey-time-label {
+    font-size: 0.5625rem;
+    letter-spacing: 0.02em;
+    color: var(--obilet-label-blue);
+    text-transform: uppercase;
+    line-height: 1;
+}
+
+.journey-time {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--obilet-navy);
+    line-height: 1.2;
+}
+
+.journey-arrow {
+    color: var(--obilet-navy);
+    font-size: 0.875rem;
+}
+
+.journey-route {
+    font-size: 0.75rem;
+    color: var(--obilet-dark-slate);
+}
+
+/*
+ * Kartın ikinci satırı: güzergâh ve firma.
+ *
+ * Dar ekranda güzergâh kendi satırını alır. Aksi hâlde uzun bir firma adının
+ * yanına sıkışıp dört satıra bölünüyor ve kart yükseklikleri listede
+ * tutarsızlaşıyordu; 320px genişlikte gözle görülür bir kusur.
+ */
+.journey-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.25rem 0.5rem;
+}
+
+.journey-meta > .journey-route {
+    flex: 1 1 100%;
+}
+
+.journey-partner {
+    font-size: 0.8125rem;
+    color: var(--obilet-slate);
+}
+
+.journey-partner-logo {
+    height: 20px;
+    width: auto;
+    max-width: 72px;
+    object-fit: contain;
+}
+
+/* Fiyat etiketi: şartnamede sağa dayalı, kırmızı dolgu, beyaz metin. */
+.price-badge {
+    background-color: var(--obilet-red);
+    color: #FFFFFF;
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: 2px;
+    white-space: nowrap;
+}
+
+.price-original {
+    font-size: 0.75rem;
+    color: var(--obilet-slate);
+    text-decoration: line-through;
+}
+
+/* Ertesi güne taşan seferleri ayıran başlık. */
+.next-day-divider {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--obilet-dark-slate);
+    border-top: 1px solid var(--obilet-card-border);
+    padding-top: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+/* --- Masaüstü ------------------------------------------------------------ */
+/*
+ * Şartnamede masaüstü artboard'u yok. Canlı obilet.com sitesi aynı üç alanı
+ * yatay dizdiği için genişlikte o düzene geçiliyor; yığılı kart ve dikişte
+ * duran dairesel takas butonu motifi korunuyor.
+ */
+/* Orta genişlikten itibaren güzergâh ve firma aynı satırı paylaşabilir. */
+@media (min-width: 576px) {
+    .journey-meta > .journey-route {
+        flex: 1 1 auto;
+    }
+}
+
+@media (min-width: 768px) {
+    .search-panel {
+        padding: 2rem 1.5rem 2.5rem;
+        border-radius: 4px;
+    }
+
+    .location-fields {
+        flex-direction: row;
+        align-items: stretch;
+        gap: 0;
+    }
+
+    .location-fields > .field-card {
+        flex: 1 1 0;
+    }
+
+    .swap-button {
+        position: static;
+        align-self: center;
+        margin: 0 -14px;
+        flex: 0 0 auto;
+    }
+
+    .journey-card {
+        padding: 0.75rem 1.25rem;
+    }
+}

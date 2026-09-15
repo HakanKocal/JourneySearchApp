@@ -15,84 +15,139 @@
 }
 
 @*
-    Sefer listesi. Bu adımda sade bir tablo; kart tasarımı, firma logosu ve
-    fiyat etiketi tasarım adımının işidir. Buradaki kritik davranış sıralama:
-    tam tarih-saat değerine göre artan, günün saatine göre değil.
+    Sefer listesi. Şartnamedeki mavi başlık ve iki satırlı gradyan kartlar
+    izlenir; firma adı ve logosu şartnamenin gösterdiğinden bir adım fazla,
+    çünkü operatörü göstermeyen bir sefer listesi inandırıcı bir ürün değil.
 *@
 
-<div class="d-flex align-items-center gap-3 mb-3">
-    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary btn-sm">
-        &larr; @L["Journey_Back"]
-    </a>
-    <div>
-        <div class="h5 mb-0">@originLabel &rarr; @destinationLabel</div>
-        <div class="small text-muted">@Model.DepartureDate.ToString("d MMMM yyyy, dddd")</div>
-    </div>
-</div>
+@section Header {
+    <header class="journey-header">
+        <div class="container position-relative" style="max-width: 720px">
+            @* Geri oku sol üstte, başlık ortalanmış — şartnamedeki yerleşim. *@
+            <a asp-controller="Home" asp-action="Index"
+               class="position-absolute start-0 top-0 ps-2 fs-5"
+               title="@L["Journey_Back"]" aria-label="@L["Journey_Back"]">
+                &larr;
+            </a>
 
-@if (Model.IsEmpty)
-{
-    @* Boş sonuç bir hata değil: normal bir cevap olarak sunulur. *@
-    <div class="alert alert-info">
-        <div>@L["Journey_Empty"]</div>
-        <div class="small mt-1">@L["Journey_EmptyHint"]</div>
-    </div>
+            <div class="text-center">
+                @* Güzergâh adı sayfanın başlığıdır; görsel başlık aynı
+                   zamanda belge başlığı olarak işaretlenir. *@
+                <h1 class="journey-header-title mb-0">@originLabel &ndash; @destinationLabel</h1>
+                <div class="journey-header-subtitle">@Model.DepartureDate.ToString("d MMMM, dddd")</div>
+            </div>
+        </div>
+    </header>
 }
-else
-{
-    <p class="text-muted">@L["Journey_CountFormat", Model.Journeys.Count]</p>
 
-    <table class="table table-sm align-middle">
-        <thead>
-            <tr>
-                <th scope="col">@L["Journey_Departure"]</th>
-                <th scope="col">@L["Journey_Arrival"]</th>
-                <th scope="col">@L["Journey_Duration"]</th>
-                <th scope="col">@L["Journey_Partner"]</th>
-                <th scope="col">@L["Journey_Route"]</th>
-                <th scope="col" class="text-end">@L["Journey_Price"]</th>
-            </tr>
-        </thead>
-        <tbody>
+<div class="journey-page py-3">
+    <div class="container px-2" style="max-width: 720px">
+        @if (Model.IsEmpty)
+        {
+            @* Boş sonuç bir hata değil: normal bir cevap olarak sunulur. *@
+            <div class="journey-card text-center py-4">
+                <div class="fw-semibold" style="color: var(--obilet-dark-slate)">@L["Journey_Empty"]</div>
+                <div class="small mt-2">@L["Journey_EmptyHint"]</div>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-obilet mt-3">
+                    @L["Journey_Back"]
+                </a>
+            </div>
+        }
+        else
+        {
+            <p class="small mb-2 px-1">@L["Journey_CountFormat", Model.Journeys.Count]</p>
+
             @for (var index = 0; index < Model.Journeys.Count; index++)
             {
                 var journey = Model.Journeys[index];
 
                 @if (nextDayIndex == index)
                 {
-                    <tr class="table-secondary">
-                        <td colspan="6" class="small fw-semibold">
-                            @L["Journey_NextDayFormat",
-                                journey.Departure.ToString("d MMMM yyyy, dddd")]
-                        </td>
-                    </tr>
+                    <div class="next-day-divider px-1 mb-2">
+                        @L["Journey_NextDayFormat", journey.Departure.ToString("d MMMM, dddd")]
+                    </div>
                 }
 
-                <tr>
-                    <td class="fw-semibold">@journey.Departure.ToString("HH:mm")</td>
-                    <td>@journey.Arrival.ToString("HH:mm")</td>
-                    <td>@(journey.Duration?.ToString(@"h\:mm") ?? "-")</td>
-                    <td>@journey.PartnerName</td>
-                    <td class="small">@journey.OriginStation &ndash; @journey.DestinationStation</td>
-                    <td class="text-end">
-                        @*
-                            Sayı biçimi kültürden, para birimi API'nin bildirdiği
-                            koddan gelir. ToString("C2") kullanılmaz: İngilizce
-                            arayüzde Türk Lirası tutarını dolar olarak gösterirdi.
-                        *@
-                        <span class="fw-semibold">
-                            @MoneyFormatter.Format(journey.InternetPrice, journey.Currency)
-                        </span>
-                        @if (journey.HasDiscount)
-                        {
-                            @* Yalnızca gerçek indirim varsa çizili fiyat gösterilir. *@
-                            <span class="small text-muted text-decoration-line-through ms-1">
-                                @MoneyFormatter.Format(journey.OriginalPrice, journey.Currency)
+                <div class="journey-card mb-2">
+                    @* Birinci satır: kalkış ve varış saatleri solda, fiyat sağda. *@
+                    <div class="d-flex align-items-start justify-content-between gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <div>
+                                <div class="journey-time-label">@L["Journey_Departure"]</div>
+                                <div class="journey-time">@journey.Departure.ToString("HH:mm")</div>
+                            </div>
+
+                            <span class="journey-arrow">&rarr;</span>
+
+                            <div>
+                                <div class="journey-time-label">@L["Journey_Arrival"]</div>
+                                <div class="journey-time">@journey.Arrival.ToString("HH:mm")</div>
+                            </div>
+
+                            @if (journey.Duration.HasValue)
+                            {
+                                <div class="ms-2">
+                                    <div class="journey-time-label">@L["Journey_Duration"]</div>
+                                    <div class="journey-route">@journey.Duration.Value.ToString(@"h\:mm")</div>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="text-end">
+                            @*
+                                Sayı biçimi kültürden, para birimi API'nin bildirdiği
+                                koddan gelir. ToString("C2") kullanılmaz: İngilizce
+                                arayüzde Türk Lirası tutarını dolar olarak gösterirdi.
+                            *@
+                            <span class="price-badge">
+                                @MoneyFormatter.Format(journey.InternetPrice, journey.Currency)
                             </span>
-                        }
-                    </td>
-                </tr>
+
+                            @if (journey.HasDiscount)
+                            {
+                                @* Yalnızca gerçek indirim varsa çizili fiyat gösterilir. *@
+                                <div class="price-original mt-1">
+                                    @MoneyFormatter.Format(journey.OriginalPrice, journey.Currency)
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    @*
+                        İkinci satır: terminal güzergâhı ve firma. Dar ekranda
+                        güzergâh kendi satırını alır; bkz. .journey-meta.
+                    *@
+                    <div class="journey-meta mt-2">
+                        <div class="journey-route">
+                            @journey.OriginStation &ndash; @journey.DestinationStation
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2 flex-shrink-0 ms-auto">
+                            <span class="journey-partner text-end">@journey.PartnerName</span>
+                            @*
+                                Logo bir CDN üzerinde ve her firma için mevcut
+                                olduğu garanti değil; yüklenemezse gizlenir ve
+                                firma adı yazıyla kalır.
+                            *@
+                            <img class="journey-partner-logo" data-partner-logo
+                                 src="@PartnerLogo.UrlFor(journey.PartnerId)"
+                                 alt="@journey.PartnerName" loading="lazy" />
+                        </div>
+                    </div>
+                </div>
             }
-        </tbody>
-    </table>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Yüklenemeyen firma logolarını gizler. Inline onerror yerine burada
+        // bağlanıyor; işaretleme temiz kalsın.
+        for (const logo of document.querySelectorAll('[data-partner-logo]')) {
+            logo.addEventListener('error', function () {
+                logo.style.display = 'none';
+            });
+        }
+    </script>
 }
