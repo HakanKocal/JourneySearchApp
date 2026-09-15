@@ -160,7 +160,15 @@ test('geçersiz kaydedilmiş tarih yok sayılır', () => {
 test('i harfinin tüm varyantları aynı değere katlanır', () => {
     const expected = 'izmir';
 
-    for (const input of ['İzmir', 'Izmir', 'ızmir', 'IZMIR', 'İZMİR']) {
+    // Í/í/Î/î dahil: bir kod incelemesinde bu dört karakterin istemci
+    // haritasında eksik olduğu, sunucunun ise kattığı görüldü. İki uygulama
+    // ayrışırsa kullanıcı aynı terim için farklı sonuç görür.
+    const inputs = [
+        'İzmir', 'Izmir', 'ızmir', 'IZMIR', 'İZMİR',
+        'Ízmir', 'ízmir', 'Îzmir', 'îzmir'
+    ];
+
+    for (const input of inputs) {
         assert.equal(helpers.foldTurkish(input), expected, `beklenmeyen: ${input}`);
     }
 });

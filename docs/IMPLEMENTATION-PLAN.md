@@ -4,7 +4,7 @@ Bu belge, obilet.com Sr. Full Stack Developer ödevi için yapılan tasarım gö
 
 Kararların gerekçeleri `docs/adr/` altındadır, alan terimleri `CONTEXT.md` içindedir. Kullanıcıya dönük özet `README.md`'dedir.
 
-**Durum:** 10 iş kaleminin tamamı tamamlandı. 133 .NET testi ve 18 JavaScript testi geçiyor; derleme 0 uyarı / 0 hata.
+**Durum:** 10 iş kaleminin tamamı tamamlandı ve teslim öncesi kod incelemesindeki dört bulgu düzeltildi. 166 .NET testi ve 18 JavaScript testi geçiyor; derleme 0 uyarı / 0 hata.
 
 ## Bağlam
 
@@ -230,6 +230,35 @@ Tümü canlı API ile çalıştırılarak doğrulandı:
 | 10 | Oturum yeniden kullanımı | Aynı ziyaretçi 3 istek → 1 oturum; farklı ziyaretçi → 1 yeni oturum |
 | 11 | Erişilemeyen API | HTML 502 + dostane sayfa, JSON 502 + `application/json`, sızıntı taraması sıfır |
 | 12 | 320px | Kartlarda taşma yok; takas butonu dikişte |
+
+## Kod incelemesi düzeltmeleri
+
+Teslim öncesi incelemede dört bulgu çıktı; hepsi kendi yazdığım koddaydı ve düzeltildi.
+
+| # | Bulgu | Düzeltme |
+|---|---|---|
+| 1 | Tarih hesapları sunucunun yerel saatini kullanıyordu; konteyner UTC, pazar UTC+3 | `IMarketClock` / `MarketClock`; controller'lar ve API istemcisi buna bağlandı |
+| 2a | `h:mm` gün bileşenini düşürüyordu (25s30d → `1:30`) | `DurationFormatter`, toplam saat üzerinden |
+| 2b | `25:30:00` biçimi tüm yanıtı düşürüyordu | `TolerantTimeSpanConverter`; ayrıştırılamayan süre `null` |
+| 3 | Sunucu sonuç kimlikleri terim değiştikten sonra da eşleşme sayılıyordu | Kimlikler geldikleri terimle birlikte tutuluyor |
+| 4 | İstemci katlama haritası `Í í Î î` atlıyordu | Eklendi; JS testi dokuz varyantı kontrol ediyor |
+
+**Bulgu 1'in önemi:** her gece 21:00–00:00 (UTC) arasında sunucunun "bugün"ü kullanıcının dünü oluyordu. O pencerede `Yarın` varsayılanı bugünü gösteriyor, `Bugün` çipi dünü arıyor ve şartnamenin "minimum geçerli tarih bugündür" kuralı doğrulamadan geçiyordu (`dün < dün` yanlış olduğu için).
+
+**Düzeltme sırasında bulunan ek hata:** `25:30:00` için eklediğim ilk dönüştürücü `TimeSpan.TryParse`'a güveniyordu, ancak o `48:00:00` değerini başarısız saymıyor — `d:hh:mm` sanıp 48 **gün** olarak ayrıştırıyor. İstisna fırlatmasından daha kötü bir sonuç: sessizce yanlış bir süre. Bileşenler artık elle okunuyor. Bunu yazdığım bir test ortaya çıkardı.
+
+### Bulgu 1'in canlı doğrulaması
+
+Kasten uzak bir saat dilimine alınmış bir konteynerde çalıştırıldı:
+
+```
+konteynerin yerel tarihi : 2026-09-16 08:32 NZST
+pazarın tarihi (TR)      : 2026-09-15 23:32
+uygulamanın "bugün"ü     : min="2026-09-15"    ← pazarın tarihi
+varsayılan kalkış        : value="2026-09-16"  ← pazar açısından yarın
+```
+
+Düzeltme öncesi aynı konteyner `min="2026-09-16"` bildirecekti. Gece yarısı eşiğinin kendisi `MarketClockTests` içinde sahte bir saatle deterministik olarak kapsanıyor; canlı ortamda beklemeye bağlı olmayan bir doğrulama bu şekilde yapıldı.
 
 ### Doğrulanamayan üç şey
 

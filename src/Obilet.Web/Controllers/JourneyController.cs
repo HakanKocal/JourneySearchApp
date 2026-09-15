@@ -2,6 +2,7 @@ using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Obilet.Application.Journeys;
 using Obilet.Application.Locations;
+using Obilet.Application.Time;
 using Obilet.Web.Models;
 
 namespace Obilet.Web.Controllers;
@@ -22,16 +23,16 @@ public sealed class JourneyController : Controller
 
     private readonly IJourneyService _journeyService;
     private readonly ILocationService _locationService;
-    private readonly TimeProvider _timeProvider;
+    private readonly IMarketClock _clock;
 
     public JourneyController(
         IJourneyService journeyService,
         ILocationService locationService,
-        TimeProvider timeProvider)
+        IMarketClock clock)
     {
         _journeyService = journeyService;
         _locationService = locationService;
-        _timeProvider = timeProvider;
+        _clock = clock;
     }
 
     /// <summary>
@@ -101,9 +102,8 @@ public sealed class JourneyController : Controller
         locations.FirstOrDefault(location => location.Id == id)?.Name;
 
     /// <remarks>
-    /// <see cref="TimeProvider"/> üzerinden okunur; <c>DateTime.Today</c>
-    /// doğrudan kullanıldığında tarihe bağlı davranış test edilemez hâle gelir.
+    /// Bugün, sunucunun değil <b>pazarın</b> saat diliminden okunur;
+    /// bkz. <see cref="IMarketClock"/>.
     /// </remarks>
-    private DateOnly Today() =>
-        DateOnly.FromDateTime(_timeProvider.GetLocalNow().DateTime);
+    private DateOnly Today() => _clock.Today;
 }

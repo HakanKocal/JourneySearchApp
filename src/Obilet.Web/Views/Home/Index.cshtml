@@ -173,7 +173,15 @@
                 // anahtar kelime alanından geliyor ve istemci o alanı görmüyor.
                 // Örneğin "esenler" araması "İstanbul Avrupa" döndürüyor;
                 // yalnızca ada bakan bir süzgeç bu sonucu elerdi.
-                let remoteMatchIds = new Set();
+                //
+                // Küme, geldiği terimle birlikte tutuluyor. Bunu bir kod
+                // incelemesi ortaya çıkardı: yalnızca kimlikleri saklamak,
+                // önceki aramanın sonuçlarının sonraki terimde de eşleşme
+                // sayılmasına yol açıyordu — "kadikoy" araması İstanbul
+                // Anadolu döndürdükten sonra "iz" yazıldığında o kayıt
+                // listede kalıyordu. Minimum uzunluğun altındaki terimlerde
+                // istek hiç atılmadığı için küme kendiliğinden de sıfırlanmıyordu.
+                let remoteMatches = { query: null, ids: new Set() };
 
                 return new TomSelect(element, {
                     valueField: 'id',
@@ -186,9 +194,16 @@
 
                     score: function (search) {
                         const needle = helpers.foldTurkish(search);
+
+                        // Sunucu sonuçları yalnızca geldikleri terim için
+                        // geçerli; terim değiştiyse yok sayılırlar.
+                        const trusted = remoteMatches.query === needle
+                            ? remoteMatches.ids
+                            : null;
+
                         return function (item) {
                             if (!needle) return 1;
-                            if (remoteMatchIds.has(String(item.id))) return 1;
+                            if (trusted !== null && trusted.has(String(item.id))) return 1;
 
                             return helpers.foldTurkish(item.name).indexOf(needle) !== -1 ? 1 : 0;
                         };
@@ -206,13 +221,17 @@
                                 return response.ok ? response.json() : [];
                             })
                             .then(function (results) {
-                                remoteMatchIds = new Set(
-                                    results.map(function (item) { return String(item.id); }));
+                                remoteMatches = {
+                                    query: helpers.foldTurkish(query),
+                                    ids: new Set(results.map(function (item) {
+                                        return String(item.id);
+                                    }))
+                                };
                                 callback(results);
                             })
                             // Ağ hatası açılır listeyi kilitlememeli.
                             .catch(function () {
-                                remoteMatchIds = new Set();
+                                remoteMatches = { query: null, ids: new Set() };
                                 callback();
                             });
                     },

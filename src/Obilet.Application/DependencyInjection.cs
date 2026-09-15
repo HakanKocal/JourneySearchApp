@@ -4,6 +4,7 @@ using Obilet.Application.Journeys;
 using Obilet.Application.Localization;
 using Obilet.Application.Locations;
 using Obilet.Application.Sessions;
+using Obilet.Application.Time;
 
 namespace Obilet.Application;
 
@@ -28,6 +29,9 @@ public static class DependencyInjection
 
         // Durumsuz: yalnızca ambient kültürü okuyup beyaz listeden geçirir.
         services.AddSingleton<IMarketLocaleResolver, MarketLocaleResolver>();
+
+        // Pazarın saat dilimi çözümlemesi bir kez yapılır.
+        services.AddSingleton<IMarketClock, MarketClock>();
 
         return services;
     }

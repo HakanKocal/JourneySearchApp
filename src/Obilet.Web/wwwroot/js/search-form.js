@@ -27,8 +27,14 @@
     // bulunmasının sebebi: sunucu API sonucunu süzüyor, istemci ise sayfayla
     // birlikte gelen varsayılan listeyi süzüyor. Kurallar ayrışırsa kullanıcı
     // aynı terim için iki farklı davranış görür.
+    // Not: bu harita sunucudaki Fold ile karakter karakter aynı olmalı.
+    // Bir kod incelemesinde Í/í/Î/î karakterlerinin burada eksik olduğu
+    // görüldü; sunucu onları da i'ye katlıyordu. Yalnızca istemci tarafı
+    // süzmenin çalıştığı yollarda (terim minimum uzunluktan kısa ya da
+    // arama isteği başarısız) bu fark kullanıcıya farklı sonuç gösteriyordu.
     const FOLD_MAP = {
         'İ': 'i', 'I': 'i', 'ı': 'i', 'i': 'i',
+        'Í': 'i', 'í': 'i', 'Î': 'i', 'î': 'i',
         'Ş': 's', 'ş': 's', 'Ğ': 'g', 'ğ': 'g',
         'Ç': 'c', 'ç': 'c', 'Ö': 'o', 'ö': 'o',
         'Ü': 'u', 'ü': 'u', 'Â': 'a', 'â': 'a',

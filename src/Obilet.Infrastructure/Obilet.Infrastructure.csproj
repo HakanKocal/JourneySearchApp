@@ -18,4 +18,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- Toleransli sure donusturucusu gibi ic detaylarin dogrudan test edilebilmesi icin. -->
+    <InternalsVisibleTo Include="Obilet.Tests" />
+  </ItemGroup>
+
 </Project>

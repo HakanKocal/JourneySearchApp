@@ -135,6 +135,7 @@ Ayrı bir Domain katmanı **bilinçli olarak yok**: uygulama hiçbir varlığa s
 | Redis | Opsiyonel bağımlılık; yoksa süreç içi belleğe düşer (`docs/adr/0003`) |
 | Lokalizasyon | `.resx` + `IStringLocalizer`, iki dil eksiksiz, bir test pariteyi korur |
 | Para biçimi | Sayı biçimi kültürden, para birimi API'nin bildirdiği koddan |
+| Tarih hesabı | "Bugün" sunucunun değil **pazarın** saat diliminden okunur (`IMarketClock`) |
 | Tasarım | Mobil-öncelikli responsive; şartname yalnızca mobil (`docs/adr/0005`) |
 
 ### Alan sözlüğü
@@ -151,6 +152,17 @@ Bunlar eksiklik değil, tercih:
 - **Entegrasyon testleri.** `WebApplicationFactory` ile controller testleri yazılmadı; testler saf mantığa ve API istemcisinin yanıt yorumlamasına odaklandı — projenin gerçek riski orada.
 - **Sefer detay sayfası ve satın alma.** Şartname kapsamında değil.
 - **Özellik ikonları, koltuk sayısı, otobüs tipi.** Tasarım şartnamesi sefer satırında göstermiyor; satıra yalnızca firma adı ve logosu eklendi.
+
+## Kod incelemesinde bulunan ve düzeltilen kusurlar
+
+Teslim öncesi yapılan incelemede dört kusur bulundu ve hepsi düzeltildi. Hepsi kendi yazdığım koddaydı:
+
+1. **Saat dilimi (orta).** Tarih hesapları sunucunun yerel saatini kullanıyordu. Konteyner imajı UTC çalışıyor, pazar ise UTC+3; ölçülen fark 3 saat. Sonucu: her gece 21:00–00:00 (UTC) arasında sunucunun "bugün"ü kullanıcının dünü oluyor, `Yarın` varsayılanı bugünü gösteriyor ve şartnamenin "minimum geçerli tarih bugündür" kuralı doğrulamadan geçiyordu. Artık tarih pazarın saat diliminden okunuyor; `TZ=Pacific/Auckland` ile çalıştırılan bir konteynerde uygulamanın hâlâ Türkiye tarihini bildirdiği doğrulandı.
+2. **Süre biçimi (düşük).** `h:mm` biçimi gün bileşenini düşürüyordu: 25 saat 30 dakikalık bir sefer `1:30` görünüyordu. Ayrıca süre alanı `25:30:00` biçiminde gelirse ayrıştırma hatası **tüm sefer listesini** hata sayfasına çeviriyordu. İkisi de düzeltildi; ayrıştırılamayan süre artık yalnızca gösterilmiyor.
+3. **Otomatik tamamlamada bayat eşleşmeler (düşük).** Sunucudan gelen sonuç kimlikleri, terim değiştikten sonra da eşleşme sayılıyordu. Kimlikler artık geldikleri terimle birlikte tutuluyor.
+4. **Katlama kurallarının ayrışması (düşük).** İstemci haritası `Í í Î î` karakterlerini atlıyordu, sunucu katlıyordu — "iki uygulama ayrışmamalı" diye yorum yazdığım yerde, daha doğduğu anda ayrışmışlar. Eklendi ve bir test dokuz varyantı birden kontrol ediyor.
+
+Düzeltmeleri yazarken bir de kendi hatamı buldum: `25:30:00` için eklediğim ilk dönüştürücü `TimeSpan.TryParse`'a güveniyordu, ama o `48:00:00` değerini başarısız saymıyor — `d:hh:mm` sanıp **48 gün** olarak ayrıştırıyor. İstisna fırlatmaktan daha kötü bir sonuç. Bileşenler artık elle okunuyor.
 
 ## Bilinen sınırlar
 

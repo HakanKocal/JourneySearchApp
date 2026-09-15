@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using Obilet.Application.Journeys;
 using Obilet.Application.Locations;
+using Obilet.Application.Time;
 using Obilet.Web.Models;
 using Obilet.Web.Validation;
 
@@ -19,16 +20,16 @@ public sealed class HomeController : Controller
 
     private readonly ILocationService _locationService;
     private readonly IStringLocalizer<SharedResource> _localizer;
-    private readonly TimeProvider _timeProvider;
+    private readonly IMarketClock _clock;
 
     public HomeController(
         ILocationService locationService,
         IStringLocalizer<SharedResource> localizer,
-        TimeProvider timeProvider)
+        IMarketClock clock)
     {
         _locationService = locationService;
         _localizer = localizer;
-        _timeProvider = timeProvider;
+        _clock = clock;
     }
 
     /// <summary>
@@ -140,9 +141,10 @@ public sealed class HomeController : Controller
     }
 
     /// <remarks>
-    /// <see cref="TimeProvider"/> üzerinden okunur; <c>DateTime.Today</c>
-    /// doğrudan kullanıldığında tarihe bağlı davranış test edilemez hâle gelir.
+    /// Bugün, sunucunun değil <b>pazarın</b> saat diliminden okunur.
+    /// Konteyner UTC çalışıyor ve pazar UTC+3; host saat dilimine güvenmek
+    /// her gece üç saat boyunca yanlış bir "bugün" üretiyordu.
+    /// Bkz. <see cref="IMarketClock"/>.
     /// </remarks>
-    private DateOnly Today() =>
-        DateOnly.FromDateTime(_timeProvider.GetLocalNow().DateTime);
+    private DateOnly Today() => _clock.Today;
 }

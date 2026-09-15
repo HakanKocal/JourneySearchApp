@@ -36,7 +36,11 @@ public sealed class RateLimitHandlingTests
             ApiClientToken = "test-token",
         });
 
-        return new ObiletApiClient(httpClient, options, NullLogger<ObiletApiClient>.Instance);
+        return new ObiletApiClient(
+            httpClient,
+            options,
+            new StubMarketClock(),
+            NullLogger<ObiletApiClient>.Instance);
     }
 
     [Fact]

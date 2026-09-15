@@ -29,5 +29,10 @@ internal static class ObiletJson
         // sayı olarak geliyorlar. İki biçimi de kabul etmek, sözleşmedeki
         // bu tutarsızlığın uygulamayı düşürmesini engelliyor.
         NumberHandling = JsonNumberHandling.AllowReadingFromString,
+
+        // Süre alanı için toleranslı dönüştürücü. Varsayılan dönüştürücü
+        // saat bileşeninin 00–23 aralığında olmasını bekliyor ve 24 saati
+        // aşan bir sefer süresi ("25:30:00") tüm yanıtı düşürüyordu.
+        Converters = { new TolerantTimeSpanConverter() },
     };
 }

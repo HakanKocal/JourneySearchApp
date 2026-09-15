@@ -84,11 +84,17 @@
                                 <div class="journey-time">@journey.Arrival.ToString("HH:mm")</div>
                             </div>
 
-                            @if (journey.Duration.HasValue)
+                            @{
+                                // Süre biçimlendirmesi ayrı bir yerde: gün bileşenini
+                                // düşüren h:mm biçimi 25 saatlik bir seferi 1:30
+                                // olarak gösteriyordu.
+                                var duration = DurationFormatter.Format(journey.Duration);
+                            }
+                            @if (duration is not null)
                             {
                                 <div class="ms-2">
                                     <div class="journey-time-label">@L["Journey_Duration"]</div>
-                                    <div class="journey-route">@journey.Duration.Value.ToString(@"h\:mm")</div>
+                                    <div class="journey-route">@duration</div>
                                 </div>
                             }
                         </div>

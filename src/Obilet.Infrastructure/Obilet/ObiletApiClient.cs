@@ -6,6 +6,7 @@ using Obilet.Application.Abstractions;
 using Obilet.Application.Exceptions;
 using Obilet.Application.Localization;
 using Obilet.Application.Models;
+using Obilet.Application.Time;
 using Obilet.Infrastructure.Obilet.Contracts;
 
 namespace Obilet.Infrastructure.Obilet;
@@ -21,15 +22,18 @@ public sealed class ObiletApiClient : IObiletApiClient
 
     private readonly HttpClient _httpClient;
     private readonly ObiletApiOptions _options;
+    private readonly IMarketClock _clock;
     private readonly ILogger<ObiletApiClient> _logger;
 
     public ObiletApiClient(
         HttpClient httpClient,
         IOptions<ObiletApiOptions> options,
+        IMarketClock clock,
         ILogger<ObiletApiClient> logger)
     {
         _httpClient = httpClient;
         _options = options.Value;
+        _clock = clock;
         _logger = logger;
     }
 
@@ -167,7 +171,7 @@ public sealed class ObiletApiClient : IObiletApiClient
     /// açılırsa, tanınmayan bir değerin API'ye ulaşması isteği süresiz askıda
     /// bırakır. Tek satırlık maliyetle bütün bir arıza sınıfı kapanıyor.
     /// </remarks>
-    private static ObiletRequest<TData> BuildRequest<TData>(
+    private ObiletRequest<TData> BuildRequest<TData>(
         DeviceSession deviceSession,
         TData data,
         string marketLocale) => new()
@@ -178,7 +182,11 @@ public sealed class ObiletApiClient : IObiletApiClient
                 SessionId = deviceSession.SessionId,
                 DeviceId = deviceSession.DeviceId,
             },
-            Date = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"),
+
+            // İstek anı pazarın saatinden okunur. Sunucunun saat dilimi UTC
+            // olabilir ve konteynerde öyle; host saatine güvenmek API'ye
+            // saatlerce kaymış bir istek anı bildirmek olurdu.
+            Date = _clock.Now.ToString("yyyy-MM-ddTHH:mm:ss"),
             Language = MarketLocale.Normalize(marketLocale),
         };
 
