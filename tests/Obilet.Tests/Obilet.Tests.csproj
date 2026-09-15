@@ -22,6 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Obilet.Application\Obilet.Application.csproj" />
     <ProjectReference Include="..\..\src\Obilet.Infrastructure\Obilet.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Obilet.Web\Obilet.Web.csproj" />
   </ItemGroup>
 
 </Project>

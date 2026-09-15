@@ -23,5 +23,11 @@ internal static class ObiletJson
         // Ancak Bus Location aramasında "data": null anlamlı bir değerdir
         // (tüm liste demektir), bu yüzden null'lar yazılmaya devam eder.
         DefaultIgnoreCondition = JsonIgnoreCondition.Never,
+
+        // Savunma amaçlı: resmî doküman bazı sayısal alanları (örneğin
+        // internet-price) string olarak belgeliyor, örnek yanıtlarda ise
+        // sayı olarak geliyorlar. İki biçimi de kabul etmek, sözleşmedeki
+        // bu tutarsızlığın uygulamayı düşürmesini engelliyor.
+        NumberHandling = JsonNumberHandling.AllowReadingFromString,
     };
 }

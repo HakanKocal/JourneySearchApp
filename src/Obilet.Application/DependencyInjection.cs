@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Obilet.Application.Abstractions;
+using Obilet.Application.Journeys;
 using Obilet.Application.Localization;
 using Obilet.Application.Locations;
 using Obilet.Application.Sessions;
@@ -23,6 +24,7 @@ public static class DependencyInjection
         services.AddScoped<IDeviceSessionAccessor, DeviceSessionAccessor>();
         services.AddScoped<IObiletCallExecutor, ObiletCallExecutor>();
         services.AddScoped<ILocationService, LocationService>();
+        services.AddScoped<IJourneyService, JourneyService>();
 
         // Durumsuz: yalnızca ambient kültürü okuyup beyaz listeden geçirir.
         services.AddSingleton<IMarketLocaleResolver, MarketLocaleResolver>();

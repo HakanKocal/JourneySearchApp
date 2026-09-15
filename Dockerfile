@@ -33,6 +33,14 @@ RUN dotnet publish src/Obilet.Web/Obilet.Web.csproj \
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
+# Konteyner sağlık kontrolü bir HTTP isteği atmak zorunda, ancak aspnet
+# temel imajı Debian slim tabanlı ve ne curl ne wget içeriyor. Sağlık
+# kontrolünü çalışır kılmak için curl kuruluyor; --no-install-recommends
+# ve apt listelerinin silinmesi imaj boyutunu birkaç megabaytta tutuyor.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=build /app/publish ./
 
 # Konteyner içinde HTTPS yönlendirmesi yapılmaz: TLS sonlandırma, önünde

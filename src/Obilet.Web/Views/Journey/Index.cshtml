@@ -1,0 +1,98 @@
+@using Microsoft.Extensions.Localization
+@using Obilet.Web
+@using Obilet.Web.Formatting
+@model JourneyListViewModel
+@inject IStringLocalizer<SharedResource> L
+@{
+    var originLabel = Model.OriginName ?? Model.OriginId.ToString();
+    var destinationLabel = Model.DestinationName ?? Model.DestinationId.ToString();
+
+    ViewData["Title"] = $"{originLabel} - {destinationLabel}";
+
+    // Gece yarısını aşan seferlerin başladığı sıra. Liste kronolojik olduğu
+    // için bu seferler sonda toplanır ve araya bir ayırıcı konur.
+    var nextDayIndex = Model.FirstNextDayIndex;
+}
+
+@*
+    Sefer listesi. Bu adımda sade bir tablo; kart tasarımı, firma logosu ve
+    fiyat etiketi tasarım adımının işidir. Buradaki kritik davranış sıralama:
+    tam tarih-saat değerine göre artan, günün saatine göre değil.
+*@
+
+<div class="d-flex align-items-center gap-3 mb-3">
+    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary btn-sm">
+        &larr; @L["Journey_Back"]
+    </a>
+    <div>
+        <div class="h5 mb-0">@originLabel &rarr; @destinationLabel</div>
+        <div class="small text-muted">@Model.DepartureDate.ToString("d MMMM yyyy, dddd")</div>
+    </div>
+</div>
+
+@if (Model.IsEmpty)
+{
+    @* Boş sonuç bir hata değil: normal bir cevap olarak sunulur. *@
+    <div class="alert alert-info">
+        <div>@L["Journey_Empty"]</div>
+        <div class="small mt-1">@L["Journey_EmptyHint"]</div>
+    </div>
+}
+else
+{
+    <p class="text-muted">@L["Journey_CountFormat", Model.Journeys.Count]</p>
+
+    <table class="table table-sm align-middle">
+        <thead>
+            <tr>
+                <th scope="col">@L["Journey_Departure"]</th>
+                <th scope="col">@L["Journey_Arrival"]</th>
+                <th scope="col">@L["Journey_Duration"]</th>
+                <th scope="col">@L["Journey_Partner"]</th>
+                <th scope="col">@L["Journey_Route"]</th>
+                <th scope="col" class="text-end">@L["Journey_Price"]</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (var index = 0; index < Model.Journeys.Count; index++)
+            {
+                var journey = Model.Journeys[index];
+
+                @if (nextDayIndex == index)
+                {
+                    <tr class="table-secondary">
+                        <td colspan="6" class="small fw-semibold">
+                            @L["Journey_NextDayFormat",
+                                journey.Departure.ToString("d MMMM yyyy, dddd")]
+                        </td>
+                    </tr>
+                }
+
+                <tr>
+                    <td class="fw-semibold">@journey.Departure.ToString("HH:mm")</td>
+                    <td>@journey.Arrival.ToString("HH:mm")</td>
+                    <td>@(journey.Duration?.ToString(@"h\:mm") ?? "-")</td>
+                    <td>@journey.PartnerName</td>
+                    <td class="small">@journey.OriginStation &ndash; @journey.DestinationStation</td>
+                    <td class="text-end">
+                        @*
+                            Sayı biçimi kültürden, para birimi API'nin bildirdiği
+                            koddan gelir. ToString("C2") kullanılmaz: İngilizce
+                            arayüzde Türk Lirası tutarını dolar olarak gösterirdi.
+                        *@
+                        <span class="fw-semibold">
+                            @MoneyFormatter.Format(journey.InternetPrice, journey.Currency)
+                        </span>
+                        @if (journey.HasDiscount)
+                        {
+                            @* Yalnızca gerçek indirim varsa çizili fiyat gösterilir. *@
+                            <span class="small text-muted text-decoration-line-through ms-1">
+                                @MoneyFormatter.Format(journey.OriginalPrice, journey.Currency)
+                            </span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

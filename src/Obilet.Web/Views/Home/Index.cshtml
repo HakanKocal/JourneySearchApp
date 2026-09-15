@@ -2,63 +2,71 @@
 @using Microsoft.Extensions.Localization
 @using Obilet.Application.Localization
 @using Obilet.Web
-@model LocationListViewModel
+@model JourneySearchViewModel
 @inject IStringLocalizer<SharedResource> L
 @{
-    ViewData["Title"] = L["Locations_Title"].Value;
+    ViewData["Title"] = L["Search_Title"].Value;
 }
 
 @*
-    Bu görünüm bilinçli olarak sade. Amacı, obilet API'sinden gerçek veri
-    geldiğini ve arayüz metinlerinin kaynak dosyasından okunduğunu kanıtlamak.
-    Arama formu ve tasarım sonraki adımların işidir.
+    Arama formu. Bu adımda kalkış ve varış alanları düz açılır listelerdir;
+    metin araması, takas butonu, tarih çipleri ve tasarım sonraki adımların
+    işidir. Form POST ediliyor ve sonuç sayfasına yönlendirme yapılıyor,
+    böylece sefer sayfası kendi paylaşılabilir adresine sahip oluyor.
 *@
 
-<h1 class="h4 mb-3">@L["Locations_Title"]</h1>
+<h1 class="h4 mb-3">@L["Search_Title"]</h1>
 
-<p class="text-muted">@L["Locations_OrderNote"]</p>
+@if (Model.Locations.Count == 0)
+{
+    <div class="alert alert-warning">@L["Search_NoLocations"]</div>
+}
+else
+{
+    <form asp-controller="Home" asp-action="Search" method="post" class="row g-3">
+        <div class="col-12 col-md-4">
+            <label asp-for="OriginId" class="form-label">@L["Search_Origin"]</label>
+            <select asp-for="OriginId" class="form-select">
+                @foreach (var location in Model.Locations)
+                {
+                    <option value="@location.Id">@location.Name</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-12 col-md-4">
+            <label asp-for="DestinationId" class="form-label">@L["Search_Destination"]</label>
+            <select asp-for="DestinationId" class="form-select">
+                @foreach (var location in Model.Locations)
+                {
+                    <option value="@location.Id">@location.Name</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-12 col-md-4">
+            <label asp-for="DepartureDate" class="form-label">@L["Search_Date"]</label>
+            @*
+                Tarayıcının yerel tarih seçicisi kullanılıyor. type="date"
+                her zaman ISO biçimi (yyyy-MM-dd) gönderir, dolayısıyla
+                kültüre bağlı ayrıştırma sorunu oluşmaz.
+            *@
+            <input asp-for="DepartureDate" type="date" class="form-control"
+                   value="@Model.DepartureDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)" />
+        </div>
+
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">@L["Search_Submit"]</button>
+        </div>
+    </form>
+}
 
 @*
-    Kültür eşlemesinin çalıştığını gözle doğrulanabilir kılar: arayüz dili ile
-    API'ye giden pazar kodu ayrı kavramlardır ve ikisi bir beyaz listeyle
-    bağlanır. Tasarım adımında kaldırılacak geçici bir tanı satırıdır.
+    Kültür eşlemesinin çalıştığını gözle doğrulanabilir kılan geçici tanı
+    satırı. Tasarım adımında kaldırılacak.
 *@
-<p class="small text-secondary">
+<p class="small text-secondary mt-4">
     @L["Culture_Current"]: <code>@CultureInfo.CurrentUICulture.Name</code>
     &middot;
     @L["Culture_MarketLocale"]: <code>@MarketLocale.FromCulture(CultureInfo.CurrentUICulture)</code>
 </p>
-
-@if (Model.Locations.Count == 0)
-{
-    <div class="alert alert-warning">@L["Locations_Empty"]</div>
-}
-else
-{
-    <p>
-        @L["Locations_CountFormat", Model.Locations.Count]
-        @L["Locations_DefaultsFormat",
-            Model.DefaultOrigin?.Name ?? "-",
-            Model.DefaultDestination?.Name ?? "-"]
-    </p>
-
-    <table class="table table-sm table-striped align-middle">
-        <thead>
-            <tr>
-                <th scope="col">@L["Table_Rank"]</th>
-                <th scope="col">@L["Table_Id"]</th>
-                <th scope="col">@L["Table_Name"]</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var location in Model.Locations)
-            {
-                <tr>
-                    <td>@(location.Rank?.ToString() ?? "-")</td>
-                    <td>@location.Id</td>
-                    <td>@location.Name</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}

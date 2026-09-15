@@ -56,7 +56,7 @@ services:
     # API'sini çağırıyor ve o servis yavaşladığında veya hız sınırı
     # uyguladığında konteyner gereksizce sağlıksız işaretlenirdi.
     healthcheck:
-      test: ["CMD", "sh", "-c", "wget -q -O /dev/null http://localhost:8080/health || exit 1"]
+      test: ["CMD", "curl", "--fail", "--silent", "--show-error", "http://localhost:8080/health"]
       interval: 15s
       timeout: 5s
       retries: 3

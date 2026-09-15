@@ -87,3 +87,57 @@ internal sealed class BusLocationPayload
     public int? Rank { get; init; }
     public string? Keywords { get; init; }
 }
+
+/// <summary>Sefer aramasının uç noktaya özel yükü.</summary>
+internal sealed class JourneyQueryPayload
+{
+    public int OriginId { get; init; }
+    public int DestinationId { get; init; }
+
+    /// <summary>Aranan kalkış günü. <c>yyyy-MM-ddTHH:mm:ss</c> biçiminde.</summary>
+    public string DepartureDate { get; init; } = string.Empty;
+}
+
+/// <summary>
+/// Sefer yanıt kaydı. Yalnızca kullandığımız alanlar tanımlıdır.
+/// </summary>
+/// <remarks>
+/// API sefer başına yüzden fazla alan döndürüyor. Hepsini modellemek, hiçbiri
+/// kullanılmayacakken bakım yükü ve gereksiz ayrıştırma maliyeti getirirdi;
+/// tanımlanmayan alanlar sessizce yok sayılır.
+/// </remarks>
+internal sealed class BusJourneyPayload
+{
+    public long Id { get; init; }
+    public int PartnerId { get; init; }
+    public string? PartnerName { get; init; }
+    public string? BusType { get; init; }
+    public int TotalSeats { get; init; }
+    public int AvailableSeats { get; init; }
+
+    /// <summary>Seferin zaman, güzergâh ve fiyat bilgilerini taşıyan alt nesne.</summary>
+    public JourneyDetailPayload? Journey { get; init; }
+
+    internal sealed class JourneyDetailPayload
+    {
+        /// <summary>Kalkış terminalinin adı.</summary>
+        public string? Origin { get; init; }
+
+        /// <summary>Varış terminalinin adı.</summary>
+        public string? Destination { get; init; }
+
+        public DateTime Departure { get; init; }
+        public DateTime Arrival { get; init; }
+
+        /// <summary><c>HH:mm:ss</c> biçiminde yolculuk süresi.</summary>
+        public TimeSpan? Duration { get; init; }
+
+        public string? Currency { get; init; }
+
+        /// <summary>İndirim öncesi liste fiyatı.</summary>
+        public decimal OriginalPrice { get; init; }
+
+        /// <summary>Çevrimiçi satış fiyatı.</summary>
+        public decimal InternetPrice { get; init; }
+    }
+}

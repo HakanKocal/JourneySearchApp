@@ -60,8 +60,13 @@ public sealed class DistributedLocationCache : ILocationCache
     /// Önbellek anahtarı. Market Locale anahtarın parçasıdır; bkz.
     /// <see cref="ILocationCache"/> açıklaması.
     /// </summary>
+    /// <remarks>
+    /// Uygulama öneki bilinçli olarak eklenmez: Redis kaydı zaten bir
+    /// <c>InstanceName</c> öneki uyguluyor ve burada tekrarlamak anahtarı
+    /// <c>obilet:obilet:...</c> hâline getiriyordu.
+    /// </remarks>
     private static string BuildKey(string marketLocale) =>
-        $"obilet:locations:default:{marketLocale}";
+        $"locations:default:{marketLocale}";
 
     private async Task<IReadOnlyList<BusLocation>?> TryReadAsync(
         string key,

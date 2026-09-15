@@ -69,6 +69,11 @@ builder.Services.AddScoped<IVisitorSessionStore, HttpVisitorSessionStore>();
 // oysa uygulama önbellekle veya hata sayfasıyla hizmet vermeye devam edebilir.
 builder.Services.AddHealthChecks();
 
+// Tarihe bağlı davranış (varsayılan kalkış tarihi, geçmiş tarih kontrolü)
+// doğrudan DateTime.Today yerine bu soyutlamadan okunur; aksi hâlde test
+// edilemez hâle gelir.
+builder.Services.AddSingleton(TimeProvider.System);
+
 // --- Katmanlar --------------------------------------------------------------
 builder.Services.AddObiletApplication();
 builder.Services.AddObiletInfrastructure(builder.Configuration);

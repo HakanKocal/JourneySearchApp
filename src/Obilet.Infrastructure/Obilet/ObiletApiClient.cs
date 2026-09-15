@@ -17,6 +17,7 @@ public sealed class ObiletApiClient : IObiletApiClient
 
     private const string SessionEndpoint = "client/getsession";
     private const string BusLocationsEndpoint = "location/getbuslocations";
+    private const string BusJourneysEndpoint = "journey/getbusjourneys";
 
     private readonly HttpClient _httpClient;
     private readonly ObiletApiOptions _options;
@@ -97,6 +98,64 @@ public sealed class ObiletApiClient : IObiletApiClient
             .Where(item => !string.IsNullOrWhiteSpace(item.Name))
             .Select(item => new BusLocation(item.Id, item.Name!, item.Rank, item.Keywords))
             .ToList();
+    }
+
+    public async Task<IReadOnlyList<Journey>> GetBusJourneysAsync(
+        DeviceSession deviceSession,
+        int originId,
+        int destinationId,
+        DateOnly departureDate,
+        string marketLocale,
+        CancellationToken cancellationToken = default)
+    {
+        var query = new JourneyQueryPayload
+        {
+            OriginId = originId,
+            DestinationId = destinationId,
+
+            // API tarih alanını gün başlangıcı olarak bekliyor; saat
+            // bileşeni verilmediğinde sonuç değişiyor.
+            DepartureDate = departureDate.ToString("yyyy-MM-dd") + "T00:00:00",
+        };
+
+        var request = BuildRequest(deviceSession, query, marketLocale);
+
+        var payload = await PostAsync<ObiletRequest<JourneyQueryPayload>, List<BusJourneyPayload>>(
+            BusJourneysEndpoint, request, cancellationToken);
+
+        if (payload is null)
+        {
+            return [];
+        }
+
+        // Projeksiyon burada yapılır: API yanıtı sefer başına yüzden fazla
+        // alan taşıyor ve popüler bir hatta birkaç megabayta ulaşıyor.
+        // Arayüze yalnızca kullanılan alanlar geçer.
+        return payload
+            .Where(item => item.Journey is not null)
+            .Select(ToJourney)
+            .ToList();
+    }
+
+    private static Journey ToJourney(BusJourneyPayload payload)
+    {
+        var detail = payload.Journey!;
+
+        return new Journey(
+            Id: payload.Id,
+            PartnerId: payload.PartnerId,
+            PartnerName: payload.PartnerName ?? string.Empty,
+            BusType: payload.BusType,
+            TotalSeats: payload.TotalSeats,
+            AvailableSeats: payload.AvailableSeats,
+            OriginStation: detail.Origin,
+            DestinationStation: detail.Destination,
+            Departure: detail.Departure,
+            Arrival: detail.Arrival,
+            Duration: detail.Duration,
+            OriginalPrice: detail.OriginalPrice,
+            InternetPrice: detail.InternetPrice,
+            Currency: detail.Currency);
     }
 
     /// <summary>

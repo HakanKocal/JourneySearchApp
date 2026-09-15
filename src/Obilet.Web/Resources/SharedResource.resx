@@ -72,34 +72,64 @@
     <value>obilet.com sefer arama</value>
   </data>
 
-  <data name="Locations_Title" xml:space="preserve">
-    <value>Bus Location listesi</value>
+  <!-- Arama formu -->
+  <data name="Search_Title" xml:space="preserve">
+    <value>Sefer ara</value>
   </data>
-  <data name="Locations_OrderNote" xml:space="preserve">
-    <value>API'nin döndürdüğü sıra korunuyor. Varsayılan kalkış ve varış noktaları bu sıranın ilk iki kaydından belirlenir.</value>
+  <data name="Search_Origin" xml:space="preserve">
+    <value>Nereden</value>
   </data>
-  <data name="Locations_Empty" xml:space="preserve">
-    <value>API hiç lokasyon döndürmedi.</value>
+  <data name="Search_Destination" xml:space="preserve">
+    <value>Nereye</value>
   </data>
-  <data name="Locations_CountFormat" xml:space="preserve">
-    <value>{0} kayıt geldi.</value>
-    <comment>{0} = lokasyon sayısı</comment>
+  <data name="Search_Date" xml:space="preserve">
+    <value>Tarih</value>
   </data>
-  <data name="Locations_DefaultsFormat" xml:space="preserve">
-    <value>Varsayılan kalkış: {0}, varsayılan varış: {1}.</value>
-    <comment>{0} = origin adı, {1} = destination adı</comment>
+  <data name="Search_Submit" xml:space="preserve">
+    <value>Bileti Bul</value>
   </data>
-
-  <data name="Table_Rank" xml:space="preserve">
-    <value>Sıra</value>
-  </data>
-  <data name="Table_Id" xml:space="preserve">
-    <value>Id</value>
-  </data>
-  <data name="Table_Name" xml:space="preserve">
-    <value>Ad</value>
+  <data name="Search_NoLocations" xml:space="preserve">
+    <value>Lokasyon listesi alınamadı. Lütfen daha sonra tekrar deneyin.</value>
   </data>
 
+  <!-- Sefer listesi -->
+  <data name="Journey_Back" xml:space="preserve">
+    <value>Geri</value>
+  </data>
+  <data name="Journey_Empty" xml:space="preserve">
+    <value>Seçtiğiniz güzergâh ve tarih için sefer bulunamadı.</value>
+  </data>
+  <data name="Journey_EmptyHint" xml:space="preserve">
+    <value>Başka bir tarih deneyebilir veya kalkış ve varış noktalarını değiştirebilirsiniz.</value>
+  </data>
+  <data name="Journey_CountFormat" xml:space="preserve">
+    <value>{0} sefer bulundu.</value>
+    <comment>{0} = sefer sayısı</comment>
+  </data>
+  <data name="Journey_NextDayFormat" xml:space="preserve">
+    <value>{0} tarihinde kalkan seferler</value>
+    <comment>{0} = ertesi günün tarihi. Gece yarısını aşan seferler için ayırıcı başlık.</comment>
+  </data>
+  <data name="Journey_Departure" xml:space="preserve">
+    <value>Kalkış</value>
+  </data>
+  <data name="Journey_Arrival" xml:space="preserve">
+    <value>Varış</value>
+  </data>
+  <data name="Journey_Duration" xml:space="preserve">
+    <value>Süre</value>
+  </data>
+  <data name="Journey_Partner" xml:space="preserve">
+    <value>Firma</value>
+  </data>
+  <data name="Journey_Route" xml:space="preserve">
+    <value>Güzergâh</value>
+  </data>
+  <data name="Journey_Price" xml:space="preserve">
+    <value>Fiyat</value>
+  </data>
+
+  <!-- Geçici tanı satırı; tasarım adımında kaldırılacak -->
   <data name="Culture_Current" xml:space="preserve">
     <value>Geçerli dil</value>
   </data>

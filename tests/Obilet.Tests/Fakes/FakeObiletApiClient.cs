@@ -28,4 +28,33 @@ internal sealed class FakeObiletApiClient : IObiletApiClient
         string marketLocale,
         CancellationToken cancellationToken = default)
         => Task.FromResult<IReadOnlyList<BusLocation>>([]);
+
+    /// <summary>Sefer aramasının döndüreceği liste.</summary>
+    public IReadOnlyList<Journey> Journeys { get; set; } = [];
+
+    /// <summary>
+    /// Ayarlandığında sefer aramasının bunun yerine fırlatacağı istisna.
+    /// </summary>
+    public Exception? JourneySearchException { get; set; }
+
+    /// <summary>Sefer aramasına geçirilen son Market Locale değeri.</summary>
+    public string? LastMarketLocale { get; private set; }
+
+    public Task<IReadOnlyList<Journey>> GetBusJourneysAsync(
+        DeviceSession deviceSession,
+        int originId,
+        int destinationId,
+        DateOnly departureDate,
+        string marketLocale,
+        CancellationToken cancellationToken = default)
+    {
+        LastMarketLocale = marketLocale;
+
+        if (JourneySearchException is not null)
+        {
+            throw JourneySearchException;
+        }
+
+        return Task.FromResult(Journeys);
+    }
 }

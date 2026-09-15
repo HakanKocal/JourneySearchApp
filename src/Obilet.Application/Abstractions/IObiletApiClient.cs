@@ -32,4 +32,23 @@ public interface IObiletApiClient
         string? query,
         string marketLocale,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// İki Bus Location arasında, verilen tarihte uygun Journey listesini döndürür.
+    /// </summary>
+    /// <remarks>
+    /// Dönen liste <b>sıralı değildir</b> ve istenen günle sınırlı da değildir:
+    /// gece yarısını aşan seferler ertesi güne taşır. Sıralama çağıranın
+    /// sorumluluğundadır; bkz. <c>JourneyOrdering</c>.
+    /// </remarks>
+    /// <param name="departureDate">
+    /// Aranan kalkış günü. Saat bileşeni taşımaz; bir gündür, bir an değil.
+    /// </param>
+    Task<IReadOnlyList<Journey>> GetBusJourneysAsync(
+        DeviceSession deviceSession,
+        int originId,
+        int destinationId,
+        DateOnly departureDate,
+        string marketLocale,
+        CancellationToken cancellationToken = default);
 }
