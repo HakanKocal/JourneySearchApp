@@ -1,12 +1,16 @@
-# Uygulama Planı
+# Uygulama Planı ve Teslim Kaydı
 
-Bu plan, obilet.com Sr. Full Stack Developer ödevi için yapılan tasarım görüşmesinin (28 karar) çıktısıdır. Kararların gerekçeleri `docs/adr/` altındadır, alan terimleri `CONTEXT.md` içindedir.
+Bu belge, obilet.com Sr. Full Stack Developer ödevi için yapılan tasarım görüşmesinin (28 karar) çıktısı olarak yazıldı ve uygulama tamamlandıktan sonra **fiilen teslim edilen hâle** göre güncellendi. Planlanandan sapılan yerler ayrıca işaretlidir.
+
+Kararların gerekçeleri `docs/adr/` altındadır, alan terimleri `CONTEXT.md` içindedir. Kullanıcıya dönük özet `README.md`'dedir.
+
+**Durum:** 10 iş kaleminin tamamı tamamlandı. 133 .NET testi ve 18 JavaScript testi geçiyor; derleme 0 uyarı / 0 hata.
 
 ## Bağlam
 
 Kullanıcı Origin, Destination ve Departure Date seçer; uygulama obilet business API'sinden uygun Journey listesini çeker ve kalkış saatine göre sıralı gösterir. İki sayfa: arama formu ve sefer listesi. Tüm API çağrıları backend'de yapılır; tarayıcı yalnızca kendi backend'imizle konuşur.
 
-Plan, canlı API üzerinde doğrulanmış yedi bulgu üzerine kuruludur. Bunlar resmî dokümanla veya şartnameyle çelişiyor ve mimariyi doğrudan şekillendiriyor:
+Plan, canlı API üzerinde doğrulanmış bulgular üzerine kuruludur. Bunlar resmî dokümanla veya şartnameyle çelişiyor ve mimariyi doğrudan şekillendirdi. İlk yedisi kod yazılmadan önce, sekizincisi uygulama sırasında bulundu:
 
 | # | Bulgu |
 |---|---|
@@ -14,118 +18,223 @@ Plan, canlı API üzerinde doğrulanmış yedi bulgu üzerine kuruludur. Bunlar 
 | 2 | Hatalar **HTTP 200** ile dönüyor; başarısızlık yalnızca gövdedeki `status` alanından anlaşılıyor. Sunucu kendi stack trace'ini sızdırıyor. Geçersiz Device Session ise HTTP 400 + `DeviceSessionError` veriyor. |
 | 3 | `GetBusLocations` hiçbir zaman tüm lokasyonları döndürmüyor: `data:null` → tam 20 kayıt. Arama da 20 ile sınırlı. |
 | 4 | Arama asla boş dönmüyor; anlamsız girdide en popüler 10 lokasyona düşüyor. Eşleştirme `keywords` üzerinden bulanık. |
-| 5 | Seferler sırasız geliyor ve ertesi güne taşıyor: 425 sefer / 3,2 MB, 53'ü ertesi gün 03:00'a kadar. |
+| 5 | Seferler sırasız geliyor ve ertesi güne taşıyor: 427 sefer / 3,2 MB, bir kısmı ertesi gün 03:00'a kadar. |
 | 6 | API minimum tarih kuralını uygulamıyor (dünün tarihi `Success` + 150 sefer). Geçersiz lokasyon ID'si `InvalidLocation` değil, 0 sonuçlu `Success` veriyor. |
 | 7 | `language` bir pazar seçici. `en-US` → Türk pazarı İngilizce; `en-GB` → Britanya lokasyonları; **`en-EN` süresiz askıda kalıyor**; tanınmayan locale'ler de askıda kalıyor. |
-| 8 | API Cloudflare arkasında ve `GetSession` çağrısı **hız sınırlı**. Sınır aşıldığında `HTTP 429` ve `Retry-After: 3556` (~1 saat) dönüyor; gövde JSON değil, düz metin `error code: 1015`. Bu, ziyaretçi başına oturumun yeniden kullanılmasını bir optimizasyon değil **zorunluluk** yapıyor. |
+| 8 | API bir CDN arkasında ve `GetSession` çağrısı **hız sınırlı**. Sınır aşıldığında `HTTP 429` ve `Retry-After: 3556` (~1 saat) dönüyor; gövde JSON değil, düz metin `error code: 1015`. Bu, ziyaretçi başına oturumun yeniden kullanılmasını bir optimizasyon değil **zorunluluk** yapıyor. |
 
 ## Çözüm yapısı
 
 ```
-Obilet.sln
+Obilet.slnx
 ├── src/
-│   ├── Obilet.Web/             ASP.NET Core MVC (.NET 10), Controllers, Views, wwwroot, Resources
-│   ├── Obilet.Application/     Servisler, view model'ler, arayüzler, doğrulama
-│   └── Obilet.Infrastructure/  Tipli obilet API istemcisi, DTO'lar, önbellek, oturum
+│   ├── Obilet.Application/     Alan modelleri, servisler, arayüzler, kurallar
+│   │   ├── Abstractions/       IObiletApiClient, IDeviceSessionAccessor,
+│   │   │                       IObiletCallExecutor, IVisitorSessionStore
+│   │   ├── Caching/            ILocationCache
+│   │   ├── Exceptions/         ObiletApiException
+│   │   ├── Journeys/           JourneyService, JourneyOrdering, SearchQueryValidator
+│   │   ├── Localization/       MarketLocale, MarketLocaleResolver
+│   │   ├── Locations/          LocationService, LocationRelevance, TurkishSearchText
+│   │   ├── Models/             DeviceSession, BusLocation, Journey
+│   │   └── Sessions/           DeviceSessionAccessor, ObiletCallExecutor
+│   ├── Obilet.Infrastructure/  Tipli API istemcisi, sözleşmeler, önbellek
+│   │   ├── Caching/            DistributedLocationCache
+│   │   └── Obilet/             ObiletApiClient, ObiletApiOptions, ObiletJson, Contracts
+│   └── Obilet.Web/             ASP.NET Core MVC (.NET 10)
+│       ├── Controllers/        Home, Journey, Locations, Culture
+│       ├── Filters/            ObiletApiExceptionFilter
+│       ├── Formatting/         MoneyFormatter, PartnerLogo
+│       ├── Resources/          SharedResource.resx + .en-US.resx
+│       ├── Sessions/           HttpVisitorSessionStore
+│       ├── Validation/         SearchQueryErrorMessages
+│       └── wwwroot/            obilet.css, search-form.js
 ├── tests/
-│   └── Obilet.Tests/           xUnit
-├── docs/adr/                   Mimari karar kayıtları
-├── CONTEXT.md                  Alan sözlüğü
-├── global.json                 SDK sürümü sabitlenir
-├── Dockerfile                  Multi-stage
+│   ├── Obilet.Tests/           xUnit — 133 test, 15 dosya
+│   └── js/                     Node test runner — 18 test
+├── docs/adr/                   5 mimari karar kaydı
+├── CONTEXT.md                  Alan sözlüğü (16 terim)
+├── NuGet.config                Depoya özel paket kaynağı
+├── global.json                 .NET 10 sabitlemesi
+├── Dockerfile                  Çok aşamalı
 └── docker-compose.yml          Uygulama + Redis
 ```
 
 Bağımlılık yönü daima içe doğru: `Web → Application ← Infrastructure`. `Application` hiçbir HTTP tipine bağlı değildir.
 
-## Yapılacaklar
+## Teslim edilenler
 
 ### 1. İskelet ve yapılandırma
 
-- `.NET 10` hedefli çözüm, `global.json` ile SDK sabitlenir.
-- `ObiletApiOptions` (BaseUrl, ApiClientToken, Timeout) `appsettings.json`'dan options binding ile bağlanır.
-- `IHttpClientFactory` ile tipli `HttpClient`; **`Timeout` ~15s** (bulgu 7 nedeniyle zorunlu).
+- `.NET 10` hedefli çözüm; `global.json` ile sabitlenmiş.
+- `ObiletApiOptions` `appsettings.json`'dan options binding ile bağlanır, `ValidateOnStart` ile açılışta doğrulanır.
+- `IHttpClientFactory` ile tipli `HttpClient`; **`Timeout` 15s** (bulgu 7 nedeniyle zorunlu).
+
+> **Sapma —** `global.json` tam yama sürümünü (`10.0.401`) çiviliyordu. Docker imajı farklı bir feature band taşıdığında `rollForward: latestFeature` geriye eşleşmediği için derleme kırıldı. `10.0.100` + `latestFeature` olarak gevşetildi; ana sürüm sabitlemesi korunuyor.
+>
+> **Eklendi —** depoya özel `NuGet.config`. Makinede global olarak tanımlı, kimlik doğrulaması gerektiren bir besleme restore işlemini 401 ile durduruyordu. Projeyi klonlayan birinin bizim kimlik bilgilerimize sahip olmasını bekleyemeyiz.
 
 ### 2. API istemcisi — `Obilet.Infrastructure`
 
-- `IObiletApiClient`: `GetSessionAsync`, `GetBusLocationsAsync(query)`, `GetBusJourneysAsync(origin, destination, date)`.
+- `IObiletApiClient`: `CreateSessionAsync`, `GetBusLocationsAsync(query)`, `GetBusJourneysAsync(...)`.
 - Ortak istek sarmalayıcı: `data` + `device-session` + `date` + `language`.
 - **Yanıt yorumlama tek noktada**: `status != "Success"` ise tipli `ObiletApiException` fırlatılır (bulgu 2). Upstream `message` loglanır, asla render edilmez.
-- `GetSession` gövdesi Postman şekliyle kurulur (bulgu 1); dokümandaki şeklin neden kullanılmadığı yorumla belirtilir.
-- JSON sözleşmesi kebab-case; `JsonSerializerOptions` tek yerde tanımlanır.
+- `GetSession` gövdesi Postman şekliyle kurulur (bulgu 1); bir test dokümandaki şekle dönülmesini engeller.
+- JSON sözleşmesi kebab-case; `JsonSerializerOptions` tek yerde.
+
+> **Eklendi —** `NumberHandling = AllowReadingFromString`. Doküman bazı sayısal alanları string olarak belgeliyor, örnek yanıtlarda sayı geliyor; iki biçimi de kabul etmek sözleşmedeki tutarsızlığın uygulamayı düşürmesini engelliyor.
+>
+> **Eklendi —** `HttpStatusCode` ve `RetryAfter` istisnaya taşınıyor (bulgu 8). Hız sınırı tespiti gövdeye tek başına güvenmiyor.
 
 ### 3. Oturum — Device Session / Visitor Session
 
-- `IDeviceSessionProvider.GetOrCreateAsync()`: Visitor Session içinde Device Session yoksa oluşturur, varsa döndürür.
-- `DeviceSessionError` alındığında **bir kez** yeniden oluşturup isteği tekrarlar (bulgu 2).
-- Depo `IDistributedCache`; Redis connection string varsa Redis, yoksa in-memory (ADR-0003).
-- Device Session hiçbir view model'e, hiçbir JSON yanıtına, hiçbir cookie'ye girmez.
+- `IDeviceSessionAccessor.GetOrCreateAsync()`: Visitor Session içinde Device Session yoksa oluşturur, varsa yeniden kullanır.
+- `IObiletCallExecutor`: `DeviceSessionError` alındığında oturumu yenileyip isteği **bir kez** tekrarlar. Servisler bu kalıbı hiç görmez.
+- Depo `IDistributedCache`; Redis varsa Redis, yoksa süreç içi bellek (ADR-0003).
+- Device Session hiçbir view model'e, JSON yanıtına veya cookie'ye girmez — canlı olarak doğrulandı.
 
 ### 4. Lokalizasyon ve Market Locale
 
-- `RequestLocalizationOptions`: yalnızca `tr-TR` ve `en-US`. Varsayılan `tr-TR`. Cookie provider önce, sonra `Accept-Language`.
-- `IMarketLocaleResolver`: Display Culture → Market Locale beyaz listesi (`tr-TR`→`tr-TR`, `en-*`→`en-US`, diğer→`tr-TR`). API istemcisi `CultureInfo`'yu **asla** doğrudan geçirmez (ADR-0002).
-- `.resx` + `IStringLocalizer` / `IViewLocalizer`; `tr` ve `en` **eksiksiz** doldurulur, görünür dil değiştirici.
-- Nötr anahtarlar (`Search_OriginLabel`), Türkçe metin anahtar olarak kullanılmaz.
+- `RequestLocalizationOptions`: yalnızca `tr-TR` ve `en-US`, desteklenen kültüreler `MarketLocale.Supported`'dan türetilir.
+- `IMarketLocaleResolver`: Display Culture → Market Locale beyaz listesi. API istemcisi `CultureInfo`'yu **asla** doğrudan geçirmez; beyaz liste **iki katmanda** birden uygulanır (ADR-0002).
+- `.resx` + `IStringLocalizer` / `IViewLocalizer`; iki dil de eksiksiz, nötr anahtarlar.
+- `CultureController` dil tercihini çereze yazar; gelen değer beyaz listeden geçer, dönüş adresi yerel olarak doğrulanır ve adresteki `culture` parametresi ayıklanır.
+
+> **Sapma —** dil değiştirici alt kısımda duruyor, başlıkta değil. Şartnamedeki üst çubuk boş ve sefer sayfası kendi başlığını getirdiği için her iki sayfada görünen ve tasarımla çakışmayan tek yer orası.
 
 ### 5. Lokasyonlar ve otomatik tamamlama
 
-- `ILocationService.GetDefaultAsync()`: 20 kayıtlık liste, `IDistributedCache`'te **kültür başına** anahtarlanmış, 30 dk (ADR-0004).
-- `SearchAsync(query)`: önbelleklenmez. En az 2 karakter.
-- **Eşleşme doğrulaması** (bulgu 4): dönen kayıtların `name`/`keywords` alanında terim gerçekten eşleşmiyorsa sonuç boş sayılır. Karşılaştırma `tr-TR` kültürüyle, `İ/ı` katlaması doğru yapılır.
-- `LocationsController` → `GET /api/locations/search?q=`; Tom Select'in remote yükleyicisi buraya bağlanır. Debounce 300ms.
+- `GetDefaultAsync()`: 20 kayıtlık liste, `IDistributedCache`'te **Market Locale başına** anahtarlı, 30 dk (ADR-0004). Boş sonuç önbelleğe alınmaz.
+- `SearchAsync(query)`: önbelleklenmez, en az 2 karakter.
+- **Eşleşme doğrulaması** (bulgu 4): `LocationRelevance` dönen kayıtları `name` ve `keywords` üzerinden süzer; hiçbiri ilişkili değilse sonuç boş sayılır.
+- `TurkishSearchText`: `i` harfinin dört varyantı tek değere katlanır, Türkçe harfler ASCII karşılıklarına indirgenir.
+- `LocationsController` → `GET /api/locations/search?q=`; yanıt yalnızca `id` ve `name` taşır.
+- Tom Select remote yükleyicisi buraya bağlı, 300ms gecikme.
 
-### 6. Arama sayfası — Index
+> **Sapma —** Türkçe katlama kuralları **iki yerde**: `TurkishSearchText.cs` ve `search-form.js`. Tek yerde tutmak mümkün değil, çünkü sunucu API sonucunu, istemci ise sayfayla birlikte gelen varsayılan listeyi süzüyor. Bu bir tarayıcı testinde bulundu: yerel süzme kapatıldığında "ankara" araması 20 alakasız şehri de listeliyordu.
+>
+> **Eklendi —** istemci, sunucunun döndürdüğü kimlikleri ayrı bir kümede izliyor. Sunucu eşleşmelerinin bir kısmı API'nin anahtar kelime alanından geliyor ve istemci o alanı görmüyor: "esenler" araması "İstanbul Avrupa" döndürüyor ve yalnızca ada bakan bir süzgeç bu doğru sonucu elerdi.
 
-- Varsayılan Origin/Destination: API'nin döndürdüğü sıranın ilk iki kaydı (rank 1, 2 = İstanbul Avrupa, İstanbul Anadolu — doğrulandı, 31 seferi var).
-- Varsayılan Departure Date: **yarın**; `Yarın` çipi seçili render edilir (ADR-0005).
-- Takas butonu: dairesel, iki kartın dikiş yerinde, sadece değerleri yer değiştirir.
-- `Bugün` / `Yarın` çipleri tarih alanını set eder ve seçili durumu günceller.
-- **Doğrulama** (bulgu 6): `IValidatableObject` ile Origin ≠ Destination ve Date ≥ bugün; istemci tarafında ayna doğrulama. Hata mesajları `.resx`'ten.
-- `localStorage` (`obilet.lastSearch`): son sorgu saklanır, dönüşte varsayılan olur. Eskimiş tarih **bugüne çekilir** ve kullanıcıya küçük bir not gösterilir. Tüm erişim `try/catch` içinde.
+### 6. Arama sayfası
 
-### 7. Sefer listesi — Journey Index
+- Varsayılan Origin/Destination: API sıralamasının ilk iki kaydı (349 İstanbul Avrupa, 350 İstanbul Anadolu).
+- Varsayılan Departure Date **yarın**, `Yarın` çipi seçili.
+- Takas butonu dairesel, iki kartın dikişinde; karşı alanda olmayan seçeneği önce ekler.
+- `Bugün` / `Yarın` çipleri tarihi set eder ve seçili durumu yansıtır.
+- `localStorage` (`obilet.lastSearch`): son sorgu saklanır ve dönüşte geri yüklenir. Eskimiş tarih bugüne çekilir ve kullanıcıya bildirilir. Tüm erişim `try/catch` içinde.
 
-- Route: `/seferler/{originId}-{destinationId}/{date}` (obilet'in dokümante ettiği kalıp).
-- Doğrudan URL erişimi mümkün olduğu için **aynı doğrulama sunucuda tekrar uygulanır**.
-- **Sıralama: tam `DateTime` artan** (bulgu 5). `OrderBy(j => j.Departure.TimeOfDay)` bir hatadır ve bir test bunu korur. Ertesi gün grubu görsel ayırıcıyla belirtilir.
-- İnce projeksiyon: ~100 alandan ~12 alanlık `JourneyViewModel` (3,2 MB → onlarca KB). Tüm satırlar render edilir, sayfalama yok.
-- Satır içeriği: `KALKIŞ` / `VARIŞ` saatleri, terminal güzergâhı, **Partner adı + logosu**, fiyat.
-- Fiyat: `internet-price` belirgin, `original-price` farklıysa üstü çizili. `tr-TR` biçimiyle `499,00 TL`.
-- Özellik metni gerekirse **`features[].name`** kullanılır, `journey.features[]` değil (ikincisi `en-US`'te de Türkçe kalıyor).
-- Partner logosu: `https://s3.eu-central-1.amazonaws.com/static.obilet.com/images/partner/{partner-id}-sm.png`, `onerror` ile yedek.
-- Boş sonuç ve `InvalidRoute` → hata sayfası değil, dostane "sefer bulunamadı" durumu.
-- Başlık: geri oku, `Origin - Destination`, alt satırda tarih.
+> **Eklendi —** kayıtta lokasyonun kimliğinin yanında **adı da** saklanıyor. Kullanıcı metin aramasıyla varsayılan 20 kaydın dışında bir yer seçebiliyor; yalnızca kimlik saklamak geri yüklerken boş bir seçim üretiyordu.
+>
+> **Sapma —** istemci tarafı JavaScript view içine gömülü değil, `wwwroot/js/search-form.js` dosyasında. Tarayıcı önbelleğine giriyor, katlama kodu tek yere toplanıyor ve saf mantık Node ile test edilebiliyor.
 
-### 8. Arayüz
+### 7. Sefer listesi
 
-- Bootstrap 5 + Tom Select (jQuery yok). Mobil-öncelikli responsive (ADR-0005).
-- Palet XD şartnamesinden: `#2F4EB4` birincil mavi, `#D23B38` fiyat kırmızısı, `#192289` saatler, `#F8F8F8` / `#F3F3F3` zeminler.
-- Global exception filter → dostane hata görünümü; upstream detay asla gösterilmez.
+- Route: `/seferler/{originId}-{destinationId}/{date}` (obilet'in dokümante ettiği kalıp). Biçimi bozuk tarih arama formuna yönlendirilir.
+- **Sıralama: tam `DateTime` artan** (bulgu 5). `OrderBy(j => j.Departure.TimeOfDay)` bir hatadır; bir test iki sonucu karşılaştırarak bunu korur. Eşit kalkışlarda kimliğe göre kararlı sıra.
+- Ertesi güne taşan grup görsel bir ayırıcıyla belirtilir.
+- İnce projeksiyon: ~100 alandan 14 alanlık `Journey` modeli. Sayfa 3,2 MB yerine ~230 KB. Tüm satırlar render edilir, sayfalama yok.
+- Satır içeriği: `KALKIŞ` / `VARIŞ` saatleri, süre, terminal güzergâhı, Partner adı + logosu, fiyat.
+- Fiyat: `internet-price` belirgin, `original-price` farklıysa üstü çizili.
+- Boş sonuç ve `InvalidRoute` → hata sayfası değil, bilgilendirici boş durum.
 
-### 9. Testler — `Obilet.Tests`
+> **Eklendi — `MoneyFormatter`.** Fiyatlar başta `ToString("C2")` ile biçimlendirilmişti ve ambient kültürün para birimi sembolünü kullandığı için İngilizce arayüzde Türk Lirası tutarları **`$900.00`** olarak görünüyordu. Artık sayı biçimi kültürden, para birimi API'nin bildirdiği koddan geliyor.
+>
+> **Kapsam dışı —** özellik ikonları, koltuk sayısı ve otobüs tipi gösterilmiyor (tasarım kararı; şartname de göstermiyor). Dolayısıyla "özellik metni `features[].name`'den okunur" notu bu uygulamada uygulanamaz durumda; ileride özellikler gösterilmek istenirse geçerli olacak.
 
-1. Sıralama: ertesi güne taşan küme doğru sıralanıyor (bulgu 5 tuzağı).
-2. Doğrulama: Origin = Destination reddediliyor; geçmiş tarih reddediliyor.
-3. Market Locale eşlemesi: `en-GB` → `en-US`, tanınmayan → `tr-TR`, **`en-EN` hiçbir zaman üretilmiyor**.
-4. Tarih çekme: eskimiş `localStorage` tarihi bugüne çekiliyor.
-5. Eşleşme doğrulaması: alakasız sonuç kümesi boş sayılıyor; `İ/ı` katlaması doğru.
-6. `HttpMessageHandler` mock'u ile: HTTP 200 + `status != Success` → `ObiletApiException`; `DeviceSessionError` → bir kez yeniden deneme.
+### 8. Doğrulama
 
-### 10. Docker ve dokümantasyon
+- `SearchQueryValidator`: Origin ≠ Destination ve Date ≥ bugün.
+- Hem form POST'unda hem sefer sayfasının adresinde uygulanır.
+- İstemci tarafında ayna doğrulama ve tarih alanında `min` özniteliği.
+- Hatalar sefer sayfasından forma **kural adı** olarak taşınır, metin olarak değil; kullanıcı dil değiştirse bile mesaj doğru dilde üretilir.
 
-- Multi-stage `Dockerfile`; `docker-compose.yml` uygulama + Redis, healthcheck + `depends_on`, **Redis portu publish edilmez**.
-- `README.md`: kurulum (`dotnet run` **ve** `docker compose up`), mimari özet, **keşfedilen API tutarsızlıkları bölümü** (yukarıdaki 7 bulgu), bilinçli kapsam dışı bırakılanlar (sayfalama, entegrasyon testleri).
-- Anlamlı commit geçmişi; tek "initial commit" ile teslim edilmez.
+> **Sapma —** doğrulama `IValidatableObject` ile view model içine değil, paylaşılan bir kural sınıfına konuldu. Sefer sayfası route parametreleriyle geliyor ve view model'e hiç bağlanmıyor; `IValidatableObject` o yolu **görmezdi**.
 
-## Doğrulama
+### 9. Arayüz ve tasarım
 
-1. `dotnet build` ve `dotnet test` temiz geçer.
-2. **Kurulumsuz çalıştırma kabul kriteri**: temiz bir klonda, Redis olmadan `dotnet run` → uygulama açılır ve arama çalışır.
-3. `docker compose up` → uygulama Redis ile açılır; Redis'in kullanıldığı loglardan doğrulanır.
-4. Index: varsayılanlar İstanbul Avrupa / İstanbul Anadolu / yarın. Takas, `Bugün`/`Yarın`, metin arama çalışır.
-5. Aynı lokasyon ve geçmiş tarih hata mesajı üretir; doğrudan URL ile de engellenir.
-6. `/seferler/349-356/{yarın}` → 400+ sefer, kalkış saatine göre artan, ertesi gün seferleri sonda.
-7. Dil değiştirici `en-US`'e geçer; lokasyon adları `Istanbul Europe` olur, arayüz İngilizceye döner.
-8. Arama alanına `xqjz` → "sonuç bulunamadı" (popüler lokasyonlar **değil**).
-9. Yeniden ziyarette son sorgu geri yüklenir; eskimiş tarih bugüne çekilir.
+- Bootstrap 5 + Tom Select. jQuery yok.
+- Palet XD şartnamesinden CSS değişkenleri olarak; ölçülen değerler şartnameyle birebir (`#2F4EB4` / 40px üst çubuk, 208px buton, `#5D686E` seçili çip).
+- Mobil-öncelikli responsive (ADR-0005). Layout devredilebilir bir `Header` bölümü sunar.
+- Şablonla gelen `site.css`, `site.js`, `_Layout.cshtml.css`, `_ValidationScriptsPartial.cshtml` ve jQuery kaldırıldı.
+
+> **Eklendi —** erişilebilirlik düzeltmesi. Şartnamede görünür başlık olmadığı için sayfa başlıksız kalıyordu; arama sayfasına gizli bir `h1`, sefer sayfasında güzergâh adı `h1` olarak işaretlendi.
+>
+> **Düzeltildi —** 320px'te güzergâh ve firma adı aynı satırı paylaşınca uzun firma adlarının yanındaki güzergâh dört satıra bölünüyor ve kart diğerlerinin iki katı yükseliyordu. Dar ekranda güzergâh kendi satırını alıyor.
+
+### 10. Hata yönetimi
+
+`ObiletApiExceptionFilter` tek bir yerde sınıflandırma yapar:
+
+| Durum | HTTP | Kullanıcıya |
+|---|---|---|
+| Hız sınırı (429) | 503 | "Şu anda çok fazla istek var" |
+| Diğer API hataları | 502 | "Bir şeyler ters gitti" |
+| Timeout | 504 | "Bir şeyler ters gitti" |
+| Ağ hatası | 502 | "Bir şeyler ters gitti" |
+
+JSON uç noktasına HTML hata sayfası gönderilmez. Upstream detay ve ilişkilendirme kimliği loglanır, kullanıcı yalnızca bir referans kimliği görür.
+
+> **Eklendi —** ağ hatası ve timeout sınıflandırması. Başta yalnızca `ObiletApiException` yakalanıyordu; erişilemeyen bir API `HttpRequestException` fırlattığı için filtreye uğramıyor ve 500 dönüyordu. Timeout bu uygulamada beklenen bir senaryo (bulgu 7).
+
+### 11. Önbellek, Docker ve dokümantasyon
+
+- `IDistributedCache`; Redis bağlantı dizesi varsa Redis, yoksa süreç içi bellek. Hangisinin seçildiği açılışta loglanır.
+- Çok aşamalı `Dockerfile`; imaj 245 MB, kurulu SDK sayısı 0, root olmayan kullanıcı.
+- `docker-compose.yml`: uygulama + Redis, healthcheck + `depends_on: service_healthy`, **Redis portu publish edilmez**.
+- `README.md`: iki çalıştırma yolu, sekiz API bulgusu, mimari özet, bilinçli kapsam dışı bırakılanlar, bilinen sınırlar.
+- 13 commit; tek "initial commit" yok.
+
+> **Eklendi — `/health` uç noktası.** İlk compose healthcheck'i ana sayfayı yokluyordu; o sayfa obilet API'sini çağırdığı için API yavaşladığında konteyner gereksizce sağlıksız işaretlenip yeniden başlatılıyordu. Sağlık kontrolü bilinçli olarak ne API'yi ne Redis'i yokluyor.
+>
+> **Düzeltildi —** healthcheck `wget` kullanıyordu ama `aspnet` temel imajı ne `wget` ne `curl` içeriyor; uygulama tamamen sağlıklıyken konteyner `unhealthy` işaretleniyordu. Runtime aşamasına `curl` kuruldu.
+>
+> **Düzeltildi —** lokasyon önbelleği anahtarı `obilet:obilet:...` şeklinde çift önek taşıyordu; Redis kaydı zaten bir `InstanceName` öneki uyguluyor.
+
+## Testler
+
+**133 .NET testi** (15 dosya) ve **18 JavaScript testi**. JavaScript testleri `node --test tests/js/` ile ayrı çalışır; test edilen mantık `localStorage` ve tarayıcı davranışı üzerine kurulu olduğu için ancak bir JavaScript çalıştırıcısı doğrulayabilir.
+
+Testler tam olarak bu projenin riskinin yaşadığı yerleri kapsıyor:
+
+| Alan | Neyi koruyor |
+|---|---|
+| `JourneyOrderingTests` | Ertesi güne taşan kümenin doğru sıralanması; naif sıralamayla karşılaştırma |
+| `MarketLocaleTests` | Beyaz liste; `en-EN` hiçbir girdiden üretilemez |
+| `ObiletApiClientTests` | HTTP 200 içindeki hata; dokümandaki gövdeye dönülmemesi |
+| `RateLimitHandlingTests` | 429 sınıflandırması; JSON olmayan gövdenin çökmemesi |
+| `SearchQueryValidatorTests` | İki kural; bugünün geçerli olduğu sınır |
+| `LocationRelevanceTests` | Anlamsız terimde boş sonuç; anahtar kelime eşleşmesinin korunması |
+| `TurkishSearchTextTests` | `i` varyantlarının katlanması; ASCII karşılıkları |
+| `MoneyFormatterTests` | Para biriminin kültürle değişmemesi |
+| `SharedResourceParityTests` | İki dilin anahtar paritesi, boş değer yokluğu, yer tutucu eşitliği |
+| `DeviceSessionAccessorTests` | Ziyaretçi başına oturum; yeniden kullanım |
+| `ObiletCallExecutorTests` | Bir kez yeniden deneme; oturumla ilgisiz hataların tekrarlanmaması |
+| `DistributedLocationCacheTests` | Kültür başına anahtarlama; önbellek düştüğünde çalışmaya devam |
+| `search-form.test.mjs` | Tarih çekme; depolama erişimi engelliyken çökmeme |
+
+## Doğrulama sonuçları
+
+Tümü canlı API ile çalıştırılarak doğrulandı:
+
+| # | Kontrol | Sonuç |
+|---|---|---|
+| 1 | `dotnet build` / `dotnet test` | 0 uyarı, 0 hata, 133/133 |
+| 2 | Redis olmadan `dotnet run` | Açılış logu "süreç içi bellek", arama uçtan uca çalışıyor |
+| 3 | `docker compose up` | Redis `healthy` → web `healthy`; `dbsize` 0→2 |
+| 4 | Varsayılanlar | İstanbul Avrupa / İstanbul Anadolu / yarın, `Yarın` çipi seçili |
+| 5 | Aynı lokasyon ve geçmiş tarih | Formda hata; adresle de 302 ile engelleniyor |
+| 6 | `/seferler/349-356/{yarın}` | 427 sefer, artan sıralı, ertesi gün grubu sonda ve ayırıcılı |
+| 7 | Dil değiştirici | `Istanbul Europe – Ankara`, `16 September, Wednesday`, `900.00 ₺` |
+| 8 | Arama `xqjz` | "Sonuç bulunamadı." — popüler lokasyonlar değil |
+| 9 | Yeniden ziyaret | Son sorgu geri yüklendi; eskimiş tarih bugüne çekildi ve bildirildi |
+| 10 | Oturum yeniden kullanımı | Aynı ziyaretçi 3 istek → 1 oturum; farklı ziyaretçi → 1 yeni oturum |
+| 11 | Erişilemeyen API | HTML 502 + dostane sayfa, JSON 502 + `application/json`, sızıntı taraması sıfır |
+| 12 | 320px | Kartlarda taşma yok; takas butonu dikişte |
+
+### Doğrulanamayan üç şey
+
+Bunlar bilinçli olarak eksik bırakıldı, gizlenmedi:
+
+1. **Hız sınırı sayfası (503) canlı tetiklenmedi.** API'yi kasten sınıra sokmak bir saatlik engel üretirdi. Sınıflandırma ve JSON olmayan gövdenin uygulamayı düşürmemesi `RateLimitHandlingTests` ile kapsanıyor; görünüm farkı yalnızca gösterilen metinde.
+2. **Gerçek 320px görüntü alanı elde edilemedi.** Tarayıcı penceresi maximize olduğu için yeniden boyutlandırma çağrısı `outerWidth`'i değiştirmedi. Mobil yerleşim, içerik kabı 320px'e sabitlenip mobil kurallar zorlanarak doğrulandı ve 427 kartın hiçbirinde taşma olmadığı ölçüldü. Gerçek bir cihazda yeniden akış kontrol edilmedi.
+3. **Depolama erişiminin engellendiği durum tarayıcıda denenmedi.** Gizli sekme davranışı, hata fırlatan bir depolama taklidiyle Node testlerinde kapsanıyor.
