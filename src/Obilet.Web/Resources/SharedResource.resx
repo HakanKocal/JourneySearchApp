@@ -159,6 +159,27 @@
     <value>Fiyat</value>
   </data>
 
+  <!-- Hata sayfası -->
+  <data name="Error_Title" xml:space="preserve">
+    <value>Bir şeyler ters gitti</value>
+  </data>
+  <data name="Error_Message" xml:space="preserve">
+    <value>Sefer bilgileri şu anda alınamıyor. Lütfen birkaç dakika sonra tekrar deneyin.</value>
+  </data>
+  <data name="Error_RateLimitedTitle" xml:space="preserve">
+    <value>Şu anda çok fazla istek var</value>
+  </data>
+  <data name="Error_RateLimitedMessage" xml:space="preserve">
+    <value>Sefer servisi geçici olarak istekleri sınırlıyor. Lütfen bir süre sonra tekrar deneyin.</value>
+  </data>
+  <data name="Error_BackHome" xml:space="preserve">
+    <value>Arama sayfasına dön</value>
+  </data>
+  <data name="Error_ReferenceFormat" xml:space="preserve">
+    <value>Referans: {0}</value>
+    <comment>{0} = istek izleme kimliği. Destekle paylaşılabilir; hassas bilgi içermez.</comment>
+  </data>
+
   <!-- Dil değiştirici -->
   <data name="Culture_Label" xml:space="preserve">
     <value>Dil</value>

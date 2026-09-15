@@ -204,6 +204,10 @@ public sealed class ObiletApiClient : IObiletApiClient
         // taşıyor ve yeniden deneme kararı buna bağlı.
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
 
+        // Hız sınırı yanıtında API bekleme süresini bildiriyor; loglanması ve
+        // kullanıcıya doğru mesajın gösterilmesi için taşınıyor.
+        var retryAfter = response.Headers.RetryAfter?.Delta;
+
         ObiletResponse<TPayload>? envelope;
         try
         {
@@ -212,17 +216,23 @@ public sealed class ObiletApiClient : IObiletApiClient
         }
         catch (JsonException ex)
         {
+            // Gövdesi JSON olmayan yanıtlar gerçekten oluyor: hız sınırı
+            // aşıldığında API'nin önündeki CDN düz metin bir hata kodu
+            // döndürüyor. Ayrıştırma hatası uygulamayı düşürmemeli.
             _logger.LogError(
                 ex,
-                "obilet API '{Endpoint}' isteğine ayrıştırılamayan bir yanıt döndürdü. HTTP {StatusCode}.",
+                "obilet API '{Endpoint}' isteğine ayrıştırılamayan bir yanıt döndürdü. HTTP {StatusCode}. RetryAfter: {RetryAfter}.",
                 endpoint,
-                (int)response.StatusCode);
+                (int)response.StatusCode,
+                retryAfter);
 
             throw new ObiletApiException(
                 status: $"HTTP{(int)response.StatusCode}",
                 endpoint: endpoint,
                 upstreamMessage: Truncate(body),
-                correlationId: null);
+                correlationId: null,
+                httpStatusCode: response.StatusCode,
+                retryAfter: retryAfter);
         }
 
         var status = envelope?.Status ?? $"HTTP{(int)response.StatusCode}";
@@ -242,7 +252,9 @@ public sealed class ObiletApiClient : IObiletApiClient
                 status,
                 endpoint,
                 envelope?.Message,
-                envelope?.CorrelationId);
+                envelope?.CorrelationId,
+                httpStatusCode: response.StatusCode,
+                retryAfter: retryAfter);
         }
 
         return envelope!.Data;

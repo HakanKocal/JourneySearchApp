@@ -1,0 +1,41 @@
+@using Microsoft.Extensions.Localization
+@using Obilet.Web
+@model ApiErrorViewModel
+@inject IStringLocalizer<SharedResource> L
+@{
+    var isRateLimited = Model.Kind == ApiErrorKind.RateLimited;
+
+    ViewData["Title"] = isRateLimited
+        ? L["Error_RateLimitedTitle"].Value
+        : L["Error_Title"].Value;
+}
+
+@*
+    Kullanıcıya gösterilen hata sayfası. Upstream hata detayı bilinçli olarak
+    yer almıyor: API başarısızlıkta kendi sunucu tarafı yığın izini
+    döndürüyor ve bunun ekrana gelmesi kabul edilemez. Detay loglanıyor;
+    kullanıcıya yalnızca destekle paylaşabileceği bir izleme kimliği veriliyor.
+*@
+
+<div class="container py-5" style="max-width: 560px">
+    <div class="field-card text-center py-4">
+        <h1 class="h5" style="color: var(--obilet-dark-slate)">
+            @(isRateLimited ? L["Error_RateLimitedTitle"] : L["Error_Title"])
+        </h1>
+
+        <p class="mb-3">
+            @(isRateLimited ? L["Error_RateLimitedMessage"] : L["Error_Message"])
+        </p>
+
+        <a asp-controller="Home" asp-action="Index" class="btn btn-obilet">
+            @L["Error_BackHome"]
+        </a>
+
+        @if (!string.IsNullOrWhiteSpace(Model.ReferenceId))
+        {
+            <p class="small text-muted mt-3 mb-0">
+                @L["Error_ReferenceFormat", Model.ReferenceId]
+            </p>
+        }
+    </div>
+</div>

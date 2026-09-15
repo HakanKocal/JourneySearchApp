@@ -162,6 +162,27 @@
     <value>Price</value>
   </data>
 
+  <!-- Hata sayfası -->
+  <data name="Error_Title" xml:space="preserve">
+    <value>Something went wrong</value>
+  </data>
+  <data name="Error_Message" xml:space="preserve">
+    <value>Bus information cannot be loaded right now. Please try again in a few minutes.</value>
+  </data>
+  <data name="Error_RateLimitedTitle" xml:space="preserve">
+    <value>Too many requests right now</value>
+  </data>
+  <data name="Error_RateLimitedMessage" xml:space="preserve">
+    <value>The bus service is temporarily rate limiting requests. Please try again later.</value>
+  </data>
+  <data name="Error_BackHome" xml:space="preserve">
+    <value>Back to search</value>
+  </data>
+  <data name="Error_ReferenceFormat" xml:space="preserve">
+    <value>Reference: {0}</value>
+    <comment>{0} = istek izleme kimliği. Destekle paylaşılabilir; hassas bilgi içermez.</comment>
+  </data>
+
   <!-- Dil değiştirici -->
   <data name="Culture_Label" xml:space="preserve">
     <value>Language</value>

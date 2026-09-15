@@ -4,6 +4,7 @@ using Obilet.Application;
 using Obilet.Application.Abstractions;
 using Obilet.Application.Localization;
 using Obilet.Infrastructure;
+using Obilet.Web.Filters;
 using Obilet.Web.Sessions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,7 +14,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 
 builder.Services
-    .AddControllersWithViews()
+    .AddControllersWithViews(options =>
+    {
+        // API hatalarını tek bir yerde kullanıcıya gösterilebilir yanıta
+        // çevirir. Upstream detayın loglanıp asla render edilmemesi burada
+        // garanti altına alınıyor; API başarısızlıkta kendi yığın izini
+        // döndürüyor.
+        options.Filters.Add<ObiletApiExceptionFilter>();
+    })
     .AddViewLocalization();
 
 // Desteklenen kültüreler, API'ye gönderilmesine izin verilen Market Locale
