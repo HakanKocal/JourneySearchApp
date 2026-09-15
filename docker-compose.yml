@@ -1,0 +1,63 @@
+# Uygulamayı Redis ile birlikte ayağa kaldırır.
+#
+# Redis burada zorunlu görünse de uygulamanın kendisi ona bağımlı değildir:
+# bağlantı dizesi verilmediğinde süreç içi bellek önbelleğine düşer ve
+# `dotnet run` ile sorunsuz çalışır. Bkz. docs/adr/0003.
+
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+    # Port bilinçli olarak host'a publish EDİLMEZ. Visitor Session içinde
+    # Device Session — yani obilet API kimlik bilgisi — tutuluyor; bu verinin
+    # makinedeki her sürece açılmasına gerek yok. Uygulama aynı compose
+    # ağından `redis:6379` adıyla erişiyor.
+    expose:
+      - "6379"
+
+    # Bellekte tutulan veri oturum ve önbellek; kalıcılığa ihtiyaç yok.
+    # Sınır aşıldığında en eski erişilenler atılır.
+    command: >
+      redis-server
+      --maxmemory 128mb
+      --maxmemory-policy allkeys-lru
+      --save ""
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+
+    ports:
+      - "8080:8080"
+
+    environment:
+      # Bu değerin varlığı Redis'i devreye alır; yokluğu süreç içi belleğe düşürür.
+      ConnectionStrings__Redis: "redis:6379"
+      ASPNETCORE_ENVIRONMENT: "Production"
+
+    depends_on:
+      redis:
+        # Redis hazır olmadan uygulamanın başlamasını engeller. Uygulama
+        # ayrıca AbortOnConnectFail=false ile açılışta ölmeyecek şekilde
+        # yapılandırıldı; bu iki önlem birbirinin yedeği.
+        condition: service_healthy
+
+    # /health bilinçli olarak yoklanıyor, ana sayfa değil. Ana sayfa obilet
+    # API'sini çağırıyor ve o servis yavaşladığında veya hız sınırı
+    # uyguladığında konteyner gereksizce sağlıksız işaretlenirdi.
+    healthcheck:
+      test: ["CMD", "sh", "-c", "wget -q -O /dev/null http://localhost:8080/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s

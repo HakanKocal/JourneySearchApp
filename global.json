@@ -1,6 +1,7 @@
 {
+  "//": "Projeyi .NET 10 SDK'sına sabitler. Sürüm bilinçli olarak en düşük kabul edilebilir değer olarak yazıldı ve rollForward latestFeature ile birlikte herhangi bir 10.0.x SDK'sını kabul eder. Tam yama sürümünü çivilemek, farklı bir yama taşıyan bir Docker imajında veya değerlendiricinin makinesinde derlemeyi gereksiz yere kırardı; asıl amaç .NET sürümünün sessizce başka bir ana sürüme kaymasını engellemek.",
   "sdk": {
-    "version": "10.0.401",
+    "version": "10.0.100",
     "rollForward": "latestFeature"
   }
 }

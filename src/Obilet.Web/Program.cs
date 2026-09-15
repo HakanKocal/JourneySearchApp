@@ -41,11 +41,15 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
     ];
 });
 
+// --- Dağıtık önbellek --------------------------------------------------------
+// Redis bağlantı dizesi varsa Redis, yoksa süreç içi bellek. Visitor Session
+// deposu da bu önbelleğin üzerine kurulduğu için Redis yapılandırıldığında
+// oturumlar kendiliğinden instance'lar arası paylaşılır hâle gelir.
+// Redis zorunlu bir bağımlılık değildir; bkz. docs/adr/0003.
+builder.Services.AddObiletCaching(builder.Configuration);
+
 // --- Visitor Session ---------------------------------------------------------
-// Device Session sunucu tarafında, ziyaretçiye özel olarak saklanır. Depo
-// şimdilik süreç içi bellektir; dağıtık önbelleğe geçiş ayrı bir adımın işi
-// ve uygulama kodunu değiştirmeyecek şekilde tasarlandı (bkz. docs/adr/0003).
-builder.Services.AddDistributedMemoryCache();
+// Device Session sunucu tarafında, ziyaretçiye özel olarak saklanır.
 builder.Services.AddSession(options =>
 {
     options.Cookie.Name = ".Obilet.Session";
@@ -58,11 +62,24 @@ builder.Services.AddSession(options =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IVisitorSessionStore, HttpVisitorSessionStore>();
 
+// Konteyner sağlık kontrolü için. Bilinçli olarak yalnızca uygulamanın ayakta
+// olduğunu bildirir; obilet API'sini veya Redis'i yoklamaz. Üçüncü parti bir
+// servise bağlı bir sağlık kontrolü, o servis yavaşladığında veya hız sınırı
+// uyguladığında konteynerin gereksizce yeniden başlatılmasına yol açardı —
+// oysa uygulama önbellekle veya hata sayfasıyla hizmet vermeye devam edebilir.
+builder.Services.AddHealthChecks();
+
 // --- Katmanlar --------------------------------------------------------------
 builder.Services.AddObiletApplication();
 builder.Services.AddObiletInfrastructure(builder.Configuration);
 
 var app = builder.Build();
+
+// Hangi önbellek sağlayıcısının seçildiği açılışta görünür olsun: sessiz bir
+// yedeğe düşmek, Redis çalışıyor sanılırken süreç içi bellekle çalışmaya yol açar.
+CachingRegistration.LogCacheProvider(
+    app.Configuration,
+    app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Obilet.Startup"));
 
 if (!app.Environment.IsDevelopment())
 {
@@ -83,6 +100,8 @@ app.UseRouting();
 app.UseSession();
 
 app.UseAuthorization();
+
+app.MapHealthChecks("/health");
 
 app.MapControllerRoute(
     name: "default",

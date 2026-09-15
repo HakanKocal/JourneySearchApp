@@ -1,0 +1,24 @@
+# Derleme çıktıları: konteyner içinde yeniden üretilir ve host'tan
+# kopyalanması hem imajı büyütür hem de platform uyuşmazlığı riski taşır.
+**/bin/
+**/obj/
+
+# Sürüm kontrolü ve IDE
+.git/
+.gitignore
+.vs/
+.idea/
+**/*.user
+
+# Dahili ticket iskelesi ve dokümanlar: çalışma zamanında gerekmez.
+.scratch/
+docs/
+
+# Docker'ın kendi dosyaları
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Test çıktıları
+**/TestResults/
+**/coverage*.*
