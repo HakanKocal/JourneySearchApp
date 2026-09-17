@@ -48,8 +48,13 @@ Veri akışının arka index'i `.ds-` önekiyle başlar ve Kibana'nın **Indices
 | `ObiletApiExceptionFilter` | Kullanıcıya hata gösterildiğinde, referans kimliğiyle |
 | Açılış | Hangi önbellek sağlayıcısı ve hangi günlük hedefleri seçildi |
 | Çerçeve | Yalnızca uyarı ve hata seviyesinde |
+| Sağlık yoklamaları | **Başarılı olduklarında yazılmaz**; başarısız olduklarında hata olarak yazılır |
 
-Çerçevenin bilgi seviyesindeki istek günlükleri bilinçli olarak bastırıldı. Ölçüm: bastırılmadan önce 178 kaydın yalnızca **2'si** uygulama kodundan geliyordu; gerisi her istek için üç dört satır yazan çerçeve kategorileriydi ve `UseSerilogRequestLogging` ile aynı bilgiyi tekrarlıyordu. Bastırıldıktan sonra dört istek **9 kayıt** üretiyor.
+İki gürültü kaynağı bilinçli olarak bastırıldı; ikisi de ölçümle bulundu.
+
+**Çerçevenin bilgi seviyesindeki istek günlükleri.** Bastırılmadan önce 178 kaydın yalnızca **2'si** uygulama kodundan geliyordu; gerisi her istek için üç dört satır yazan çerçeve kategorileriydi ve `UseSerilogRequestLogging` ile aynı bilgiyi tekrarlıyordu. Bastırıldıktan sonra dört istek **9 kayıt** üretiyor.
+
+**Başarılı sağlık yoklamaları.** Docker healthcheck konteynerin içinde her 15 saniyede bir `/health` çağırıyor ve bu istekler günlüklerin en kalabalık grubuydu: 255 kaydın **72'si**, dakikada dört kayıt — boşta duran bir uygulama günde yaklaşık **5.760 kayıt** üretiyordu. Artık başarılı yoklamalar yazılmıyor; yoklama başarısız olduğunda dönen 503 yanıtı hata olarak kaydedildiği için sessizlik sağlıklı olmanın işareti oluyor.
 
 Günlük yığını yaklaşık **1,5 GB bellek** istiyor. Yalnızca uygulamayı ve Redis'i kaldırmak için:
 

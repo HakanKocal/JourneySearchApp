@@ -116,6 +116,56 @@ public static class LoggingRegistration
     }
 
     /// <summary>
+    /// Her isteği tek bir özet satırıyla günlükler.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Sağlık yoklamaları başarılı olduklarında günlüğe girmez. Sebebi
+    /// ölçümle bulundu: Docker healthcheck konteynerin içinde her 15 saniyede
+    /// bir <c>/health</c> çağırıyor ve bu istekler günlüklerin en kalabalık
+    /// grubunu oluşturuyordu — 255 kaydın 72'si, dakikada dört kayıt. Boşta
+    /// duran bir uygulama böylece günde yaklaşık 5.760 kayıt üretiyor ve
+    /// hiçbiri bir uygulama olayı değil.
+    /// </para>
+    /// <para>
+    /// Yoklama <b>başarısız</b> olduğunda yine günlüğe girer: o zaman
+    /// gerçekten bilmek istediğimiz bir şey oluyor. Yani sessizlik sağlıklı
+    /// olmanın işareti.
+    /// </para>
+    /// </remarks>
+    public static void UseObiletRequestLogging(this WebApplication app)
+    {
+        app.UseSerilogRequestLogging(options =>
+        {
+            options.GetLevel = (httpContext, _, exception) =>
+            {
+                if (exception is not null || httpContext.Response.StatusCode >= 500)
+                {
+                    return LogEventLevel.Error;
+                }
+
+                if (IsHealthProbe(httpContext))
+                {
+                    // Information'ın altında kaldığı için kaydedilmez.
+                    return LogEventLevel.Verbose;
+                }
+
+                return LogEventLevel.Information;
+            };
+        });
+    }
+
+    /// <summary>
+    /// İsteğin sağlık yoklaması olup olmadığını söyler.
+    /// </summary>
+    private static bool IsHealthProbe(HttpContext httpContext) =>
+        httpContext.Request.Path.StartsWithSegments(
+            HealthEndpointPath, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Sağlık yoklamasının adresi.</summary>
+    public const string HealthEndpointPath = "/health";
+
+    /// <summary>
     /// Hangi günlük hedeflerinin etkin olduğunu açılışta bildirir.
     /// </summary>
     /// <remarks>

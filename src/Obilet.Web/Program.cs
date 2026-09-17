@@ -7,7 +7,6 @@ using Obilet.Infrastructure;
 using Obilet.Web.Filters;
 using Obilet.Web.Logging;
 using Obilet.Web.Sessions;
-using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -105,9 +104,9 @@ CachingRegistration.LogCacheProvider(
 
 app.LogLoggingTargets();
 
-// Her isteği tek bir özet satırıyla günlükler; her istek için üç ayrı
-// satır yazan varsayılan davranıştan hem daha okunur hem daha az gürültülü.
-app.UseSerilogRequestLogging();
+// Her isteği tek bir özet satırıyla günlükler. Başarılı sağlık
+// yoklamaları hariç tutulur; gerekçe UseObiletRequestLogging içinde.
+app.UseObiletRequestLogging();
 
 if (!app.Environment.IsDevelopment())
 {
@@ -129,7 +128,9 @@ app.UseSession();
 
 app.UseAuthorization();
 
-app.MapHealthChecks("/health");
+// Adres sabitten okunuyor: istek günlüğü de aynı sabite bakarak başarılı
+// yoklamaları hariç tutuyor, ikisinin ayrışması sessiz bir gürültü kaynağı olurdu.
+app.MapHealthChecks(LoggingRegistration.HealthEndpointPath);
 
 app.MapControllerRoute(
     name: "default",
