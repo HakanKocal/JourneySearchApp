@@ -30,7 +30,9 @@ public sealed class JourneyOrderingTests
         Duration: TimeSpan.FromHours(6),
         OriginalPrice: 600,
         InternetPrice: 499,
-        Currency: "TRY");
+        Currency: "TRY",
+        Features: [],
+        TotalFeatureCount: 0);
 
     [Fact]
     public void Ayni_gun_icinde_kalkis_anina_gore_siralanir()

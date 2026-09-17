@@ -11,3 +11,9 @@ Bu ADR, arayüzün neden mobil oranlara yakın durduğunu ileride merak edecek o
 ## Consequences
 
 Şartname artboard'u `Bugün` çipini seçili ve tarihi `1 Nisan 2018 Pazar` olarak gösteriyor; bu, "varsayılan tarih yarın olmalı" fonksiyonel gereksinimiyle çelişiyor. Çelişkide fonksiyonel gereksinim esas alınır, artboard yer tutucu kabul edilir.
+
+## Güncelleme
+
+Bu belgenin bir sonucu artık geçerli değil. Yazıldığı sırada, şartname sefer satırında olanak göstermediği için olanak ikonlarının da gösterilmemesi kaydedilmişti. `docs/adr/0006` bu sonucu geçersiz kılıyor: tanıtımlı olanakların indirim kodu olduğu görülünce, tasarıma sadakat fiyatı etkileyen bir bilgiyi saklamaya değmedi.
+
+Belgenin mobil-öncelikli responsive kararı geçerliliğini koruyor.

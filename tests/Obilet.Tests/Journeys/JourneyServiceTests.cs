@@ -45,7 +45,9 @@ public sealed class JourneyServiceTests
         Duration: TimeSpan.FromHours(6),
         OriginalPrice: 600,
         InternetPrice: 499,
-        Currency: "TRY");
+        Currency: "TRY",
+        Features: [],
+        TotalFeatureCount: 0);
 
     [Fact]
     public async Task Sonuclar_kalkis_anina_gore_sirali_doner()

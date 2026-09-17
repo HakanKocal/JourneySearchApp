@@ -34,6 +34,14 @@ namespace Obilet.Application.Models;
 /// <param name="OriginalPrice">İndirim öncesi liste fiyatı.</param>
 /// <param name="InternetPrice">Çevrimiçi satış fiyatı; kullanıcının ödeyeceği tutar.</param>
 /// <param name="Currency">Fiyatların para birimi (ISO 4217).</param>
+/// <param name="Features">
+/// Gösterilecek Feature'lar; API'nin öncelik sırasına göre sıralanmış ve
+/// <see cref="Feature.MaxDisplayed"/> ile sınırlanmış hâlde.
+/// </param>
+/// <param name="TotalFeatureCount">
+/// Seferin sınırlama öncesi toplam Feature sayısı. Kırpılan öğe olup
+/// olmadığını kullanıcıya bildirebilmek için taşınır.
+/// </param>
 public sealed record Journey(
     long Id,
     int PartnerId,
@@ -48,8 +56,20 @@ public sealed record Journey(
     TimeSpan? Duration,
     decimal OriginalPrice,
     decimal InternetPrice,
-    string? Currency)
+    string? Currency,
+    IReadOnlyList<Feature> Features,
+    int TotalFeatureCount)
 {
+    /// <summary>
+    /// Yer sınırı nedeniyle gösterilmeyen Feature sayısı.
+    /// </summary>
+    /// <remarks>
+    /// Kullanıcıya listenin tamamlanmadığını bildirmek için; aksi hâlde
+    /// dört özellik gösterilen bir sefer, dört özelliği olan bir seferden
+    /// ayırt edilemezdi.
+    /// </remarks>
+    public int HiddenFeatureCount => Math.Max(0, TotalFeatureCount - Features.Count);
+
     /// <summary>
     /// Liste fiyatının satış fiyatından yüksek olup olmadığını söyler.
     /// </summary>

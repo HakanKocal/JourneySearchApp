@@ -136,6 +136,7 @@ Ayrı bir Domain katmanı **bilinçli olarak yok**: uygulama hiçbir varlığa s
 | Lokalizasyon | `.resx` + `IStringLocalizer`, iki dil eksiksiz, bir test pariteyi korur |
 | Para biçimi | Sayı biçimi kültürden, para birimi API'nin bildirdiği koddan |
 | Tarih hesabı | "Bugün" sunucunun değil **pazarın** saat diliminden okunur (`IMarketClock`) |
+| Olanaklar | Sefer kartında ikon olarak; tanıtımlı olanlar (indirim kodları) renkli etiket (`docs/adr/0006`) |
 | Tasarım | Mobil-öncelikli responsive; şartname yalnızca mobil (`docs/adr/0005`) |
 
 ### Alan sözlüğü
@@ -151,7 +152,7 @@ Bunlar eksiklik değil, tercih:
 - **Sayfalama.** Şartname seferlerin sıralı gösterilmesini istiyor; sayfalama veya üst sınır uydurmak veri düşürmüş gibi görünme riski taşıyordu. İnce projeksiyon asıl maliyeti (3,2 MB → ~230 KB) zaten çözdü. Gerçek bir üründe sonraki adım budur.
 - **Entegrasyon testleri.** `WebApplicationFactory` ile controller testleri yazılmadı; testler saf mantığa ve API istemcisinin yanıt yorumlamasına odaklandı — projenin gerçek riski orada.
 - **Sefer detay sayfası ve satın alma.** Şartname kapsamında değil.
-- **Özellik ikonları, koltuk sayısı, otobüs tipi.** Tasarım şartnamesi sefer satırında göstermiyor; satıra yalnızca firma adı ve logosu eklendi.
+- **Koltuk sayısı ve otobüs tipi.** Tasarım şartnamesi sefer satırında göstermiyor ve karar verirken fiyatı etkileyen bir bilgi taşımıyorlar.
 
 ## Kod incelemesinde bulunan ve düzeltilen kusurlar
 

@@ -118,6 +118,40 @@ internal sealed class BusJourneyPayload
     /// <summary>Seferin zaman, güzergâh ve fiyat bilgilerini taşıyan alt nesne.</summary>
     public JourneyDetailPayload? Journey { get; init; }
 
+    /// <summary>
+    /// Seferin olanakları.
+    /// </summary>
+    /// <remarks>
+    /// <b>Doğru kaynak budur.</b> Aynı bilgi <c>journey.features</c> altında
+    /// bir düz metin dizisi olarak da bulunuyor, ancak o dizi İngilizce
+    /// istekte de Türkçe kalıyor. Kaynağı değiştirmek hata vermez, yalnızca
+    /// İngilizce sayfada Türkçe metin gösterir — sessizce başarısız olan bir
+    /// değişiklik. Bkz. docs/adr/0002 ve 0006.
+    /// </remarks>
+    public List<FeaturePayload>? Features { get; init; }
+
+    /// <summary>Tek bir olanak kaydı.</summary>
+    internal sealed class FeaturePayload
+    {
+        public int Id { get; init; }
+        public string? Name { get; init; }
+
+        /// <summary>
+        /// Gösterim sırası. Canlı veride seyrek ve ardışık olmayan değerler
+        /// alıyor (10, 13, 25, 35, 55, 255), yani bir dizin değil sıralama
+        /// anahtarı.
+        /// </summary>
+        public byte? Priority { get; init; }
+
+        public bool IsPromoted { get; init; }
+
+        /// <summary>Tanıtımlı özelliğin zemin rengi; API'den gelir.</summary>
+        public string? BackColor { get; init; }
+
+        /// <summary>Tanıtımlı özelliğin metin rengi; API'den gelir.</summary>
+        public string? ForeColor { get; init; }
+    }
+
     internal sealed class JourneyDetailPayload
     {
         /// <summary>Kalkış terminalinin adı.</summary>

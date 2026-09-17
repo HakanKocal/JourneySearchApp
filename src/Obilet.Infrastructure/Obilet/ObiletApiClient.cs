@@ -145,6 +145,8 @@ public sealed class ObiletApiClient : IObiletApiClient
     {
         var detail = payload.Journey!;
 
+        var features = ToFeatures(payload.Features);
+
         return new Journey(
             Id: payload.Id,
             PartnerId: payload.PartnerId,
@@ -159,7 +161,46 @@ public sealed class ObiletApiClient : IObiletApiClient
             Duration: detail.Duration,
             OriginalPrice: detail.OriginalPrice,
             InternetPrice: detail.InternetPrice,
-            Currency: detail.Currency);
+            Currency: detail.Currency,
+            Features: features.Take(Feature.MaxDisplayed).ToList(),
+            TotalFeatureCount: features.Count);
+    }
+
+    /// <summary>
+    /// Olanakları gösterim sırasına dizer ve adı olmayanları ayıklar.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Sıralama API'nin kendi <c>priority</c> değerine göre artan.
+    /// Değeri olmayan kayıtlar sona atılır; eşitlikte kimliğe göre kararlı
+    /// bir sıra kalır, aksi hâlde aynı sorgu iki kez farklı sırada
+    /// görünebilirdi.
+    /// </para>
+    /// <para>
+    /// Sınırlama çağıran tarafta değil burada, projeksiyon sırasında
+    /// uygulanır: bir seferin 8 olanağı olabiliyor ve hepsini her sefer için
+    /// taşımak, yanıtı 3,2 MB'dan ~230 KB'a indiren kazancı geri alırdı.
+    /// </para>
+    /// </remarks>
+    private static List<Feature> ToFeatures(
+        IEnumerable<BusJourneyPayload.FeaturePayload>? payload)
+    {
+        if (payload is null)
+        {
+            return [];
+        }
+
+        return payload
+            .Where(item => !string.IsNullOrWhiteSpace(item.Name))
+            .OrderBy(item => item.Priority ?? byte.MaxValue)
+            .ThenBy(item => item.Id)
+            .Select(item => new Feature(
+                Id: item.Id,
+                Name: item.Name!.Trim(),
+                IsPromoted: item.IsPromoted,
+                BackgroundColor: item.IsPromoted ? item.BackColor : null,
+                ForegroundColor: item.IsPromoted ? item.ForeColor : null))
+            .ToList();
     }
 
     /// <summary>

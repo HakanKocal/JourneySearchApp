@@ -128,6 +128,59 @@
                             @journey.OriginStation &ndash; @journey.DestinationStation
                         </div>
 
+                        @*
+                            Olanaklar güzergâhın yanında yan yana. Öğe sayısı
+                            sunucu tarafında sınırlandığı için satır yüksekliği
+                            sabit kalır.
+                        *@
+                        @if (journey.Features.Count > 0)
+                        {
+                            <div class="journey-features" role="group"
+                                 aria-label="@L["Journey_Features"]">
+                                @foreach (var feature in journey.Features)
+                                {
+                                    @if (feature.IsPromoted)
+                                    {
+                                        @*
+                                            Tanıtımlı olanaklar metin etiketi olarak:
+                                            taşıdıkları bilgi çoğunlukla bir indirim
+                                            tutarı ve bir sembole sığmaz. Renkler
+                                            API'den geldiği için yazılmadan önce
+                                            doğrulanır; bkz. CssColor.
+                                        *@
+                                        var background = CssColor.Sanitize(feature.BackgroundColor);
+                                        var foreground = CssColor.Sanitize(feature.ForegroundColor);
+                                        var style = string.Concat(
+                                            background is null ? string.Empty : $"background-color:{background};",
+                                            foreground is null ? string.Empty : $"color:{foreground};");
+
+                                        <span class="journey-feature-badge" style="@style"
+                                              title="@feature.Name">@feature.Name</span>
+                                    }
+                                    else
+                                    {
+                                        @*
+                                            İkon her kimlik için mevcut değil ve olmayan
+                                            kimlik 403 döndürüyor; yüklenemeyen ikon
+                                            gizlenir, adı erişilebilir hâlde kalır.
+                                        *@
+                                        <img class="journey-feature-icon" data-feature-icon
+                                             src="@FeatureIcon.UrlFor(feature.Id)"
+                                             alt="@feature.Name" title="@feature.Name"
+                                             width="16" height="16" loading="lazy" />
+                                    }
+                                }
+
+                                @if (journey.HiddenFeatureCount > 0)
+                                {
+                                    <span class="journey-feature-more"
+                                          title="@L["Journey_MoreFeaturesTitleFormat", journey.HiddenFeatureCount]">
+                                        @L["Journey_MoreFeaturesFormat", journey.HiddenFeatureCount]
+                                    </span>
+                                }
+                            </div>
+                        }
+
                         <div class="d-flex align-items-center gap-2 flex-shrink-0 ms-auto">
                             <span class="journey-partner text-end">@journey.PartnerName</span>
                             @*
@@ -148,11 +201,15 @@
 
 @section Scripts {
     <script>
-        // Yüklenemeyen firma logolarını gizler. Inline onerror yerine burada
-        // bağlanıyor; işaretleme temiz kalsın.
-        for (const logo of document.querySelectorAll('[data-partner-logo]')) {
-            logo.addEventListener('error', function () {
-                logo.style.display = 'none';
+        // Yüklenemeyen firma logolarını ve olanak ikonlarını gizler. Inline
+        // onerror yerine burada bağlanıyor; işaretleme temiz kalsın.
+        //
+        // Olmayan bir olanak ikonu 404 değil 403 döndürüyor, bu yüzden
+        // durum koduna bakılamaz; tarayıcının hata olayı tek güvenilir yol.
+        const images = document.querySelectorAll('[data-partner-logo], [data-feature-icon]');
+        for (const image of images) {
+            image.addEventListener('error', function () {
+                image.style.display = 'none';
             });
         }
     </script>

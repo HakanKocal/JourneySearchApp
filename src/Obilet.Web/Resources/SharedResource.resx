@@ -159,6 +159,20 @@
     <value>Fiyat</value>
   </data>
 
+  <!-- Olanaklar -->
+  <data name="Journey_Features" xml:space="preserve">
+    <value>Olanaklar</value>
+    <comment>İkon grubunun erişilebilir adı.</comment>
+  </data>
+  <data name="Journey_MoreFeaturesFormat" xml:space="preserve">
+    <value>+{0}</value>
+    <comment>{0} = yer sınırı nedeniyle gösterilmeyen olanak sayısı.</comment>
+  </data>
+  <data name="Journey_MoreFeaturesTitleFormat" xml:space="preserve">
+    <value>{0} olanak daha</value>
+    <comment>{0} = gösterilmeyen olanak sayısı. Sayacın üzerine gelindiğinde görünür.</comment>
+  </data>
+
   <!-- Hata sayfası -->
   <data name="Error_Title" xml:space="preserve">
     <value>Bir şeyler ters gitti</value>
