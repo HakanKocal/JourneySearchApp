@@ -18,13 +18,27 @@ dotnet run --project src/Obilet.Web
 
 Redis yapılandırılmadığı için uygulama süreç içi bellek önbelleğiyle çalışır. Açılış logunda hangi önbellek sağlayıcısının seçildiği yazar.
 
-### 2. Docker ile (Redis dâhil)
+### 2. Docker ile (Redis + günlük yığını dâhil)
 
 ```bash
 docker compose up
 ```
 
-Uygulama `http://localhost:8080` adresinde açılır ve Redis ile birlikte çalışır. Redis portu host'a açılmaz.
+| Adres | Ne |
+|---|---|
+| `http://localhost:8080` | Uygulama |
+| `http://localhost:5601` | Kibana — günlükleri görüntülemek için |
+| `http://localhost:9200` | Elasticsearch (doğrulama kolaylığı için açık) |
+
+Redis portu host'a açılmaz. Günlükler `logs-obilet-web-default` veri akışına ECS biçiminde yazılır; Kibana'da **Discover** ekranından bu veri akışını seçerek görebilirsiniz.
+
+Günlük yığını yaklaşık **1,5 GB bellek** istiyor. Yalnızca uygulamayı ve Redis'i kaldırmak için:
+
+```bash
+docker compose up web redis
+```
+
+Bu durumda uygulama hâlâ Elasticsearch'e yazmayı dener, ulaşamaz ve günlükleri tamponda tutar — çalışmaya sorunsuz devam eder, günlükler konsolda kalır.
 
 > **Gereksinim:** .NET 10 SDK (doğrudan çalıştırma için) veya Docker. Depoda kendi `NuGet.config` dosyası var; makinede tanımlı özel paket beslemeleri bu çözüm için devre dışı bırakılır, böylece kimlik doğrulaması gerektiren bir besleme restore işlemini durdurmaz.
 
@@ -137,6 +151,7 @@ Ayrı bir Domain katmanı **bilinçli olarak yok**: uygulama hiçbir varlığa s
 | Para biçimi | Sayı biçimi kültürden, para birimi API'nin bildirdiği koddan |
 | Tarih hesabı | "Bugün" sunucunun değil **pazarın** saat diliminden okunur (`IMarketClock`) |
 | Olanaklar | Sefer kartında ikon olarak; tanıtımlı olanlar (indirim kodları) renkli etiket (`docs/adr/0006`) |
+| Günlükleme | Serilog; konsol her zaman, Elasticsearch opsiyonel. ECS biçimi, Kibana ile görüntülenir |
 | Tasarım | Mobil-öncelikli responsive; şartname yalnızca mobil (`docs/adr/0005`) |
 
 ### Alan sözlüğü

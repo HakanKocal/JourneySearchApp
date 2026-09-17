@@ -10,3 +10,11 @@ Redis'i zorunlu kılmamanın gerekçesi ise değerlendirme sürecidir: bu bir i�
 
 - `dotnet run` ve `docker compose up` yollarının **ikisi de** çalışır durumda tutulmalı; birinin bozulması sessizce fark edilmez.
 - `docker-compose.yml` dosyasında Redis portu host'a publish **edilmez**: Device Session bir kimlik bilgisidir.
+
+## Aynı kalıp günlüklemeye de uygulandı
+
+Elasticsearch'e günlük gönderimi sonradan eklendiğinde bu belgedeki gerekçe birebir tekrarlandı: bağlantı dizesi yoksa yalnızca konsola yazılır, Elasticsearch erişilemezse günlük kanalı tamponlayıp çalışmaya devam eder. Uygulama iki durumda da açılır ve hizmet verir.
+
+İki fark var. Birincisi, Elasticsearch portu host'a **açılıyor**; Redis'teki kısıtlamanın gerekçesi kimlik bilgisi barındırmasıydı ve günlükler kimlik bilgisi içermiyor. İkincisi, `web` servisi Elasticsearch'ü `depends_on` içine **almıyor**: uygulama ona bağımlı olmadığı gibi, oraya yazmak `docker compose up web redis` ile yığını atlamayı da imkânsız kılıyordu.
+
+Günlükler süreç dışına çıktığı için ne yazıldığı ayrıca ele alındı: `Microsoft.Extensions.Http` ve `System.Net.Http.HttpClient` kategorileri uyarı seviyesine çekildi, çünkü o kategoriler düşük seviyelerde istek başlıklarını — dolayısıyla `Authorization` başlığını — yazabiliyor.

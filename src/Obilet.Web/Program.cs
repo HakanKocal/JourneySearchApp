@@ -5,9 +5,18 @@ using Obilet.Application.Abstractions;
 using Obilet.Application.Localization;
 using Obilet.Infrastructure;
 using Obilet.Web.Filters;
+using Obilet.Web.Logging;
 using Obilet.Web.Sessions;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// --- Günlükleme --------------------------------------------------------------
+// Konsol her zaman; Elasticsearch yalnızca bağlantı dizesi tanımlıysa.
+// Elasticsearch zorunlu bir bağımlılık değil — Redis'teki gerekçenin aynısı,
+// bkz. docs/adr/0003 — ve erişilemediğinde uygulama günlükleri tamponlayıp
+// çalışmaya devam eder.
+builder.AddObiletLogging();
 
 // --- Lokalizasyon -----------------------------------------------------------
 // Kaynak dosyaları Resources klasöründe; nötr dosya Türkçe metinleri taşır.
@@ -93,6 +102,12 @@ var app = builder.Build();
 CachingRegistration.LogCacheProvider(
     app.Configuration,
     app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Obilet.Startup"));
+
+app.LogLoggingTargets();
+
+// Her isteği tek bir özet satırıyla günlükler; her istek için üç ayrı
+// satır yazan varsayılan davranıştan hem daha okunur hem daha az gürültülü.
+app.UseSerilogRequestLogging();
 
 if (!app.Environment.IsDevelopment())
 {

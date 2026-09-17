@@ -1,8 +1,13 @@
-# Uygulamayı Redis ile birlikte ayağa kaldırır.
+# Uygulamayı Redis ve günlük yığınıyla (Elasticsearch + Kibana) birlikte
+# ayağa kaldırır.
 #
-# Redis burada zorunlu görünse de uygulamanın kendisi ona bağımlı değildir:
-# bağlantı dizesi verilmediğinde süreç içi bellek önbelleğine düşer ve
-# `dotnet run` ile sorunsuz çalışır. Bkz. docs/adr/0003.
+# Hiçbiri uygulamanın zorunlu bağımlılığı değil: bağlantı dizesi verilmediğinde
+# Redis yerine süreç içi bellek önbelleği, Elasticsearch yerine yalnızca konsol
+# günlüğü kullanılır ve uygulama `dotnet run` ile sorunsuz çalışır.
+# Bkz. docs/adr/0003.
+#
+# Günlük yığını yaklaşık 1,5 GB bellek istiyor. Yalnızca uygulamayı ve Redis'i
+# kaldırmak için:  docker compose up web redis
 
 services:
   redis:
@@ -31,6 +36,72 @@ services:
       retries: 5
       start_period: 5s
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.1.0
+    restart: unless-stopped
+
+    environment:
+      # Tek düğümlü geliştirme kurulumu.
+      discovery.type: single-node
+
+      # DİKKAT: kimlik doğrulama kapalı. Bu yalnızca yerel geliştirme için
+      # kabul edilebilir ve gerçek bir ortamda asla böyle çalıştırılmamalı.
+      # Günlükler kimlik bilgisi içermiyor (bkz. LoggingRegistration), ama
+      # kimlik doğrulaması olmayan bir Elasticsearch yine de açık bir veri
+      # deposudur.
+      xpack.security.enabled: "false"
+
+      # Yığın boyutu açıkça sınırlandı; varsayılan hâli makinedeki belleğe
+      # göre büyüyor ve geliştirme makinesinde gereksiz yer tutuyor.
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+
+    # Uygulamanın günlük yazdığı hedef; ayrıca `curl localhost:9200/_cat/indices`
+    # ile doğrulama yapılabilsin diye host'a açılıyor. Redis'in aksine burada
+    # kimlik bilgisi tutulmuyor, bu yüzden aynı kısıtlama uygulanmadı.
+    ports:
+      - "9200:9200"
+
+    volumes:
+      # Yeniden başlatmada bakılmakta olan günlükler kaybolmasın.
+      # Temizlemek için: docker compose down -v
+      - elasticsearch-data:/usr/share/elasticsearch/data
+
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >
+          curl --fail --silent
+          "http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=1s"
+          || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:9.1.0
+    restart: unless-stopped
+
+    environment:
+      ELASTICSEARCH_HOSTS: "http://elasticsearch:9200"
+
+    # Günlükleri görüntülemek için açılan arayüz: http://localhost:5601
+    ports:
+      - "5601:5601"
+
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl --fail --silent "http://localhost:5601/api/status" || exit 1
+      interval: 15s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
   web:
     build:
       context: .
@@ -43,6 +114,11 @@ services:
     environment:
       # Bu değerin varlığı Redis'i devreye alır; yokluğu süreç içi belleğe düşürür.
       ConnectionStrings__Redis: "redis:6379"
+
+      # Bu değerin varlığı Elasticsearch günlüğünü devreye alır; yokluğu
+      # yalnızca konsola yazdırır.
+      ConnectionStrings__Elasticsearch: "http://elasticsearch:9200"
+
       ASPNETCORE_ENVIRONMENT: "Production"
 
     depends_on:
@@ -51,6 +127,13 @@ services:
         # ayrıca AbortOnConnectFail=false ile açılışta ölmeyecek şekilde
         # yapılandırıldı; bu iki önlem birbirinin yedeği.
         condition: service_healthy
+
+    # Elasticsearch bilinçli olarak depends_on'da YOK. İki sebebi var.
+    # Birincisi, uygulama ona bağımlı değil: günlük kanalı tamponluyor ve
+    # Elasticsearch geldiğinde gönderiyor, hazır olmasını beklemek yalnızca
+    # açılışı geciktirirdi. İkincisi, buraya yazmak `docker compose up web redis`
+    # komutunu da Elasticsearch'ü başlatmaya zorluyordu ve yığını atlamak
+    # isteyen biri için hafif yol diye bir şey kalmıyordu.
 
     # /health bilinçli olarak yoklanıyor, ana sayfa değil. Ana sayfa obilet
     # API'sini çağırıyor ve o servis yavaşladığında veya hız sınırı
@@ -61,3 +144,6 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
+
+volumes:
+  elasticsearch-data:
