@@ -102,6 +102,32 @@ services:
       retries: 12
       start_period: 60s
 
+  # Kibana'yı kullanılabilir hâle getiren tek seferlik kurulum.
+  #
+  # Kibana açılışta hiçbir data view ile gelmiyor ve data view olmadan
+  # Discover ekranı boş görünüyor — günlükler Elasticsearch'te dururken
+  # kullanıcı hiçbir şey göremiyor. Bu servis o boşluğu kapatıyor, böylece
+  # `docker compose up` sonrası Kibana'da ek bir adım gerekmiyor.
+  kibana-setup:
+    image: curlimages/curl:8.11.1
+    restart: "no"
+
+    depends_on:
+      kibana:
+        condition: service_healthy
+
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        echo "Kibana data view olusturuluyor..."
+        curl --silent --show-error --fail-with-body \
+          -X POST "http://kibana:5601/api/data_views/data_view" \
+          -H "kbn-xsrf: true" \
+          -H "Content-Type: application/json" \
+          -d '{"data_view":{"id":"obilet-web-logs","name":"obilet-web gunlukleri","title":"logs-obilet-web-*","timeFieldName":"@timestamp"}}' \
+          && echo "" && echo "data view hazir: logs-obilet-web-*" \
+          || echo "data view zaten var veya olusturulamadi; Kibana'da elle eklenebilir."
+
   web:
     build:
       context: .

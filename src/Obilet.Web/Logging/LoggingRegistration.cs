@@ -66,6 +66,20 @@ public static class LoggingRegistration
                 .MinimumLevel.Override("Microsoft.Extensions.Http", LogEventLevel.Warning)
                 .MinimumLevel.Override("System.Net.Http.HttpClient", LogEventLevel.Warning)
 
+                // Çerçevenin kendi istek günlükleri bastırılıyor.
+                //
+                // Ölçüm: bastırılmadan önce 178 kaydın yalnızca 2'si uygulama
+                // kodundan geliyordu; gerisi her istek için üç dört satır
+                // yazan çerçeve kategorileriydi (Hosting.Diagnostics,
+                // EndpointMiddleware, ControllerActionInvoker...). Zaten
+                // UseSerilogRequestLogging ile istek başına tek bir özet satırı
+                // yazıyoruz; ikisi birlikte aynı bilgiyi dört kez kaydediyordu.
+                //
+                // Uyarı ve hatalar etkilenmiyor: seviye yalnızca Information
+                // ve altını susturuyor, dolayısıyla çerçeveden gelen gerçek
+                // sorunlar görünmeye devam ediyor.
+                .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+
                 .WriteTo.Console();
 
             if (string.IsNullOrWhiteSpace(elasticsearchUrl))

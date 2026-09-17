@@ -30,7 +30,26 @@ docker compose up
 | `http://localhost:5601` | Kibana — günlükleri görüntülemek için |
 | `http://localhost:9200` | Elasticsearch (doğrulama kolaylığı için açık) |
 
-Redis portu host'a açılmaz. Günlükler `logs-obilet-web-default` veri akışına ECS biçiminde yazılır; Kibana'da **Discover** ekranından bu veri akışını seçerek görebilirsiniz.
+Redis portu host'a açılmaz. Günlükler `logs-obilet-web-default` veri akışına ECS biçiminde yazılır.
+
+**Kibana'da görmek için:** `http://localhost:5601` → Discover → **obilet-web gunlukleri**. Data view `docker compose up` sırasında otomatik oluşturulur; Kibana kendiliğinden hiçbir data view ile gelmediği ve onsuz Discover boş göründüğü için tek seferlik bir kurulum servisi bunu yapıyor.
+
+Veri akışının arka index'i `.ds-` önekiyle başlar ve Kibana'nın **Indices** listesinde varsayılan olarak gizlidir — **Data Streams** sekmesinden görünür.
+
+### Ne loglanıyor?
+
+| Kaynak | Ne |
+|---|---|
+| İstek özeti | Her istek için tek satır: yöntem, adres, durum kodu, süre |
+| `DeviceSessionAccessor` | Yeni bir Device Session oluşturulduğunda (kimlik bilgisi **yazılmaz**) |
+| `ObiletCallExecutor` | Oturum geçersizleşip yenilendiğinde |
+| `ObiletApiClient` | API başarısız durum döndürdüğünde: uç nokta, durum, ilişkilendirme kimliği, kırpılmış upstream mesaj |
+| `DistributedLocationCache` | Önbelleğe ulaşılamadığında |
+| `ObiletApiExceptionFilter` | Kullanıcıya hata gösterildiğinde, referans kimliğiyle |
+| Açılış | Hangi önbellek sağlayıcısı ve hangi günlük hedefleri seçildi |
+| Çerçeve | Yalnızca uyarı ve hata seviyesinde |
+
+Çerçevenin bilgi seviyesindeki istek günlükleri bilinçli olarak bastırıldı. Ölçüm: bastırılmadan önce 178 kaydın yalnızca **2'si** uygulama kodundan geliyordu; gerisi her istek için üç dört satır yazan çerçeve kategorileriydi ve `UseSerilogRequestLogging` ile aynı bilgiyi tekrarlıyordu. Bastırıldıktan sonra dört istek **9 kayıt** üretiyor.
 
 Günlük yığını yaklaşık **1,5 GB bellek** istiyor. Yalnızca uygulamayı ve Redis'i kaldırmak için:
 
