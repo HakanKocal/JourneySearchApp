@@ -10,7 +10,7 @@ Arayüz verilen iki masaüstü tasarımını izler.
 
 **Ana sayfa** fotoğraf zeminli bir hero taşır: sol tarafta başlık ve tanıtım metni, üzerine binen beyaz bir arama kartı, hero'nun altında dört maddelik bir tanıtım şeridi. Arama kartında hızlı tarih çipleri (`Bugün` / `Yarın`), aranabilir kalkış ve varış alanları, aralarında bir takas düğmesi ve bir tarih alanı var.
 
-**Sefer listesi** aynı hero'nun kısa hâlini, üzerine binen bir sorgu özeti kartını ve her seferi tek satırda gösteren yatay kartları taşır. Özet kartındaki tarih çipleri ve yön çevirme ikonu gerçek bağlantı: aynı güzergâhın başka gününe veya ters yönüne tek tıkla gidilir. Kartta kalkış, varış, süre, terminaller, olanaklar, firma ve fiyat yer alır.
+**Sefer listesi** aynı hero'nun kısa hâlini, üzerine binen bir sorgu özeti kartını ve her seferi tek satırda gösteren yatay kartları taşır. Tek satırlık düzen 1200px'ten başlar; altındaki genişliklerde kart yığılı düzene geçer ve olanaklar kendi satırını alır. Özet kartındaki tarih çipleri ve yön çevirme ikonu gerçek bağlantı: aynı güzergâhın başka gününe veya ters yönüne tek tıkla gidilir. Kartta kalkış, varış, süre, terminaller, olanaklar, firma ve fiyat yer alır.
 
 Kurulum mobil-öncelikli: taban stiller dar ekranı tarif eder, medya sorguları genişlikte verilen masaüstü düzenine açar. Gerekçe ve kaydedilen ödünleşmeler `docs/adr/0007`'de.
 
@@ -184,7 +184,8 @@ Ayrı bir Domain katmanı **bilinçli olarak yok**: uygulama hiçbir varlığa s
 | Lokalizasyon | `.resx` + `IStringLocalizer`, iki dil eksiksiz, bir test pariteyi korur |
 | Para biçimi | Sayı biçimi kültürden, para birimi API'nin bildirdiği koddan |
 | Tarih hesabı | "Bugün" sunucunun değil **pazarın** saat diliminden okunur (`IMarketClock`) |
-| Olanaklar | Sefer kartında ikon olarak; tanıtımlı olanlar (indirim kodları) renkli etiket (`docs/adr/0006`) |
+| Olanaklar | Sefer kartında ikon olarak, **tamamı**; tanıtımlı olanlar (indirim kodları) renkli etiket (`docs/adr/0006`, `0008`) |
+| Sıkıştırma | Brotli ve gzip, `Optimal` seviyede; 2,2 MB'lık sefer listesi ağdan 19.952 bayt gidiyor (`docs/adr/0008`) |
 | Günlükleme | Serilog; konsol her zaman, Elasticsearch opsiyonel. ECS biçimi, Kibana ile görüntülenir |
 | Tasarım | Verilen masaüstü tasarımlarından, mobil-öncelikli kurulumla (`docs/adr/0007`) |
 | Sıralama | Varsayılan sıra sunucuda; liste sayfasındaki sıralama kutusu istemcide çalışır, API'ye yeni istek atmaz |
@@ -200,7 +201,7 @@ Ayrı bir Domain katmanı **bilinçli olarak yok**: uygulama hiçbir varlığa s
 
 Bunlar eksiklik değil, tercih:
 
-- **Sayfalama.** Şartname seferlerin sıralı gösterilmesini istiyor; sayfalama veya üst sınır uydurmak veri düşürmüş gibi görünme riski taşıyordu. İnce projeksiyon asıl maliyeti (3,2 MB → ~230 KB) zaten çözdü. Gerçek bir üründe sonraki adım budur.
+- **Sayfalama.** Şartname seferlerin sıralı gösterilmesini istiyor; sayfalama veya üst sınır uydurmak veri düşürmüş gibi görünme riski taşıyordu. İnce projeksiyon ve yanıt sıkıştırma birlikte maliyeti zaten kabul edilebilir kıldı: 462 seferlik bir liste ağdan 19.952 bayt gidiyor (`docs/adr/0008`). Geriye kalan maliyet tarayıcının 2,2 MB HTML ayrıştırması; gerçek bir üründe sonraki adım budur.
 - **Entegrasyon testleri.** `WebApplicationFactory` ile controller testleri yazılmadı; testler saf mantığa ve API istemcisinin yanıt yorumlamasına odaklandı — projenin gerçek riski orada.
 - **Sefer detay sayfası ve satın alma.** Şartname kapsamında değil. Verilen tasarımda kartın sağ ucunda bir "Seç" düğmesi var; düğme görsel olarak duruyor ama **devre dışı** ve sebebi bir açıklama metniyle veriliyor. Çalışıyormuş gibi görünüp hiçbir şey yapan bir düğme, olmayan bir düğmeden daha yanıltıcı olurdu.
 - **Koltuk sayısı ve otobüs tipi.** Verilen tasarımların hiçbiri sefer satırında göstermiyor ve karar verirken fiyatı etkileyen bir bilgi taşımıyorlar. Veri modelde mevcut, yalnızca gösterilmiyor.

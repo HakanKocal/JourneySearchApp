@@ -46,8 +46,7 @@ public sealed class JourneyServiceTests
         OriginalPrice: 600,
         InternetPrice: 499,
         Currency: "TRY",
-        Features: [],
-        TotalFeatureCount: 0);
+        Features: []);
 
     [Fact]
     public async Task Sonuclar_kalkis_anina_gore_sirali_doner()

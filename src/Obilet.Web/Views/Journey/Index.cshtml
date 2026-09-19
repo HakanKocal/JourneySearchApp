@@ -268,8 +268,16 @@
                             @{
                                 var iconFeatures = journey.Features.Where(f => !f.IsPromoted).ToList();
                             }
-                            @if (iconFeatures.Count > 0 || journey.HiddenFeatureCount > 0)
+                            @if (iconFeatures.Count > 0)
                             {
+                                @*
+                                    Olanakların tamamı gösteriliyor, kırpma yok.
+                                    Önceki hâlinde dört öğelik bir kapak vardı ve
+                                    tanıtım etiketi de aynı slotları paylaştığı için
+                                    indirim kodu olan bir sefer komşusundan bir ikon
+                                    az gösteriyordu. Kapağı kaldırmanın ölçülen
+                                    maliyeti ağ üzerinde 570 bayt; bkz. Journey.
+                                *@
                                 <div class="journey-feature-icons">
                                     @foreach (var feature in iconFeatures)
                                     {
@@ -277,19 +285,15 @@
                                             İkon her kimlik için mevcut değil ve olmayan
                                             kimlik 403 döndürüyor; yüklenemeyen ikon
                                             gizlenir, adı erişilebilir hâlde kalır.
+
+                                            Ad hem `alt` hem `title` olarak veriliyor:
+                                            ikonun kendisi ne olduğunu anlatmıyor, bu
+                                            yüzden üzerine gelince adı görünmeli.
                                         *@
                                         <img class="journey-feature-icon" data-feature-icon
                                              src="@FeatureIcon.UrlFor(feature.Id)"
                                              alt="@feature.Name" title="@feature.Name"
                                              width="18" height="18" loading="lazy" />
-                                    }
-
-                                    @if (journey.HiddenFeatureCount > 0)
-                                    {
-                                        <span class="journey-feature-more"
-                                              title="@L["Journey_MoreFeaturesTitleFormat", journey.HiddenFeatureCount]">
-                                            @L["Journey_MoreFeaturesFormat", journey.HiddenFeatureCount]
-                                        </span>
                                     }
                                 </div>
                             }

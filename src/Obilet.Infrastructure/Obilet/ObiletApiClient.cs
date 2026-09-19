@@ -162,8 +162,7 @@ public sealed class ObiletApiClient : IObiletApiClient
             OriginalPrice: detail.OriginalPrice,
             InternetPrice: detail.InternetPrice,
             Currency: detail.Currency,
-            Features: features.Take(Feature.MaxDisplayed).ToList(),
-            TotalFeatureCount: features.Count);
+            Features: features);
     }
 
     /// <summary>
@@ -177,9 +176,9 @@ public sealed class ObiletApiClient : IObiletApiClient
     /// görünebilirdi.
     /// </para>
     /// <para>
-    /// Sınırlama çağıran tarafta değil burada, projeksiyon sırasında
-    /// uygulanır: bir seferin 8 olanağı olabiliyor ve hepsini her sefer için
-    /// taşımak, yanıtı 3,2 MB'dan ~230 KB'a indiren kazancı geri alırdı.
+    /// Liste sınırlanmıyor; bu bir zamanlar dört öğeyle sınırlıydı ve o
+    /// kapak ölçüm sonucu kaldırıldı. Gerekçe ve sayılar
+    /// <see cref="Journey"/> üzerindeki notta.
     /// </para>
     /// </remarks>
     private static List<Feature> ToFeatures(

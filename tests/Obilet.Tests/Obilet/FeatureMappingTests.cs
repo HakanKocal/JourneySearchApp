@@ -12,7 +12,7 @@ namespace Obilet.Tests.Obilet;
 /// </summary>
 /// <remarks>
 /// En yüksek mevcut seam olan API istemcisi seviyesinden test edilir: doğru
-/// alanın seçilmesi, gösterim sıralaması ve sayı sınırı tek yerden
+/// alanın seçilmesi, gösterim sıralaması ve renk aktarımı tek yerden
 /// gözlenebiliyor.
 /// </remarks>
 public sealed class FeatureMappingTests
@@ -150,36 +150,46 @@ public sealed class FeatureMappingTests
     }
 
     [Fact]
-    public async Task Gosterim_sayisi_sinirlanir_ve_toplam_korunur()
+    public async Task Olanaklarin_tamami_tasinir_kirpma_yapilmaz()
     {
-        // Canlı veride bir seferin 8 olanağı olabiliyor.
-        var items = Enumerable.Range(1, 8)
+        // Bu test bir kapağın yerini aldı. Eskiden en çok dört olanak
+        // taşınıyordu; canlı 462 seferlik bir listede ölçüldüğünde kapağın
+        // kazandırdığı şeyin ağ üzerinde 570 bayt olduğu görüldü, karşılığında
+        // indirim kodu olan seferler komşularından bir ikon az gösteriyordu.
+        // Gerekçe ve sayılar Journey modelindeki notta.
+        //
+        // Dokuz öğe seçilmesi keyfi değil: canlı veride ölçülen azami sayı bu.
+        var items = Enumerable.Range(1, 9)
             .Select(i => $$"""{ "id": {{i}}, "priority": {{i}}, "name": "Olanak {{i}}" }""");
 
         var journey = await SingleJourneyAsync(
             JourneyResponse("[" + string.Join(",", items) + "]"));
 
-        Assert.Equal(Feature.MaxDisplayed, journey.Features.Count);
-        Assert.Equal(8, journey.TotalFeatureCount);
-        Assert.Equal(8 - Feature.MaxDisplayed, journey.HiddenFeatureCount);
-
-        // Kırpma sıranın sonundan yapılır; en önemliler kalır.
+        Assert.Equal(9, journey.Features.Count);
         Assert.Equal("Olanak 1", journey.Features[0].Name);
-        Assert.Equal("Olanak 4", journey.Features[^1].Name);
+        Assert.Equal("Olanak 9", journey.Features[^1].Name);
     }
 
     [Fact]
-    public async Task Sinirin_altinda_kirpma_gostergesi_cikmaz()
+    public async Task Tanitim_etiketi_ikon_kontenjanini_yemez()
     {
+        // Kapağın ürettiği asıl tutarsızlık buydu: tanıtım etiketi de aynı
+        // dört slotu paylaştığı için indirim kodu olan bir sefer, aynı
+        // olanaklara sahip komşusundan bir ikon az gösteriyordu.
         var journey = await SingleJourneyAsync(JourneyResponse("""
             [
+              { "id": 99, "priority": 1, "name": "150TL Indirim Kodu", "is-promoted": true,
+                "back-color": "#E6F7EE", "fore-color": "#16A05C" },
               { "id": 10, "priority": 10, "name": "Kablosuz Internet (WiFi)" },
-              { "id": 7,  "priority": 13, "name": "220 Voltluk Priz" }
+              { "id": 7,  "priority": 13, "name": "220 Voltluk Priz" },
+              { "id": 14, "priority": 14, "name": "Koltuk ekraninda TV" },
+              { "id": 15, "priority": 15, "name": "USB Sarj" }
             ]
             """));
 
-        Assert.Equal(2, journey.Features.Count);
-        Assert.Equal(0, journey.HiddenFeatureCount);
+        Assert.Equal(5, journey.Features.Count);
+        Assert.Single(journey.Features, f => f.IsPromoted);
+        Assert.Equal(4, journey.Features.Count(f => !f.IsPromoted));
     }
 
     [Fact]
@@ -190,7 +200,6 @@ public sealed class FeatureMappingTests
         var journey = await SingleJourneyAsync(JourneyResponse("[]"));
 
         Assert.Empty(journey.Features);
-        Assert.Equal(0, journey.TotalFeatureCount);
     }
 
     [Fact]
@@ -233,7 +242,6 @@ public sealed class FeatureMappingTests
 
         var feature = Assert.Single(journey.Features);
         Assert.Equal("Kablosuz Internet (WiFi)", feature.Name);
-        Assert.Equal(1, journey.TotalFeatureCount);
     }
 
     [Fact]

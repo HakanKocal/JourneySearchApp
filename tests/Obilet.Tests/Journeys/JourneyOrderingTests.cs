@@ -31,8 +31,7 @@ public sealed class JourneyOrderingTests
         OriginalPrice: 600,
         InternetPrice: 499,
         Currency: "TRY",
-        Features: [],
-        TotalFeatureCount: 0);
+        Features: []);
 
     [Fact]
     public void Ayni_gun_icinde_kalkis_anina_gore_siralanir()

@@ -815,9 +815,11 @@ body {
 
 /* --- Olanaklar ----------------------------------------------------------- */
 /*
- * Olanaklar kendi kolonunda: üstte varsa tanıtım etiketi, altında ikonlar.
- * Öğe sayısı sunucu tarafında sınırlandığı için satır yüksekliği sabit
- * kalır; kırpılan öğeler bir sayaçla belirtilir.
+ * Olanaklar kendi kolonunda: üstte varsa tanıtım etiketleri, altında
+ * ikonlar. Öğe sayısı sınırlanmıyor — gerekçe ve ölçüm Journey modelindeki
+ * notta — bu yüzden ikon satırı dar kolonda ikinci satıra sarabilir ve o
+ * kartlar bir miktar yüksek durur. Kabul edilen ödünleşme: eksik gösterilen
+ * bir olanak, bir satır kayan bir karttan daha kötü.
  */
 .journey-features {
     grid-area: features;
@@ -855,12 +857,6 @@ body {
     font-size: 0.75rem;
     font-weight: 600;
     line-height: 1.3;
-    white-space: nowrap;
-}
-
-.journey-feature-more {
-    font-size: 0.75rem;
-    color: var(--obilet-slate);
     white-space: nowrap;
 }
 
@@ -1154,11 +1150,26 @@ body {
     .hero--list .hero-inner {
         padding-bottom: 4.5rem;
     }
+}
 
+/*
+ * Sefer kartının tek satırlık düzeni bilinçli olarak 1200px'ten başlıyor,
+ * 992px'ten değil.
+ *
+ * Ölçüm: 992–1199 bandında Bootstrap'in container'ı 960px ve beş kolon o
+ * genişliğe sığmıyor — olanak kolonuna 96px kalıyor, sekiz ikon ikinci
+ * satıra sarıyor ve 462 kartın yükseklikleri 95px ile 135px arasına
+ * dağılıyor. 1200px'te container 1140px'e çıkıyor, kolon 276px oluyor ve
+ * sarma bitiyor.
+ *
+ * Bu bandın altında kart yığılı düzeni kullanıyor ve olanaklar kendi tam
+ * genişlikteki satırını alıyor; orada sığmama diye bir durum yok.
+ */
+@media (min-width: 1200px) {
     /*
-     * Sefer kartı tek satıra açılıyor: saatler ve terminaller, olanaklar,
-     * firma, fiyat, seçim. Kolonlar sabit ölçülü çünkü kartların hizalı
-     * görünmesi listenin taranabilirliğini belirliyor.
+     * Saatler ve terminaller, olanaklar, firma, fiyat, seçim. Kolonlar
+     * sabit ölçülü çünkü kartların hizalı görünmesi listenin
+     * taranabilirliğini belirliyor.
      */
     .journey-card {
         grid-template-columns:

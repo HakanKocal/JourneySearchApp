@@ -35,13 +35,20 @@ namespace Obilet.Application.Models;
 /// <param name="InternetPrice">Çevrimiçi satış fiyatı; kullanıcının ödeyeceği tutar.</param>
 /// <param name="Currency">Fiyatların para birimi (ISO 4217).</param>
 /// <param name="Features">
-/// Gösterilecek Feature'lar; API'nin öncelik sırasına göre sıralanmış ve
-/// <see cref="Feature.MaxDisplayed"/> ile sınırlanmış hâlde.
+/// Seferin Feature'ları, API'nin öncelik sırasına göre sıralanmış hâlde.
 /// </param>
-/// <param name="TotalFeatureCount">
-/// Seferin sınırlama öncesi toplam Feature sayısı. Kırpılan öğe olup
-/// olmadığını kullanıcıya bildirebilmek için taşınır.
-/// </param>
+/// <remarks>
+/// Feature listesi bilinçli olarak <b>sınırlanmıyor</b>. Bir süre kartta en
+/// çok dört öğe gösteriliyordu; gerekçe, hepsini taşımanın ince
+/// projeksiyondan kazanılan boyutu geri alacağıydı. Ölçüm bunu yanlışladı:
+/// 462 seferlik bir listede kapağı kaldırmak ham HTML'i 2.161.286 bayttan
+/// 2.226.664 bayta, sıkıştırılmış hâlini 40.160 bayttan 40.730 bayta
+/// çıkarıyor — yani yanıtın <b>%1,4'ü</b>, ağ üzerinde 570 bayt. Asıl
+/// kazanç API yanıtını bu ince modele indirmekten geliyordu, kapaktan değil.
+/// Karşılığında kapak gerçek bir tutarsızlık üretiyordu: tanıtım etiketi de
+/// aynı dört slotu paylaştığı için indirim kodu olan bir sefer komşusundan
+/// bir ikon az gösteriyordu.
+/// </remarks>
 public sealed record Journey(
     long Id,
     int PartnerId,
@@ -57,19 +64,8 @@ public sealed record Journey(
     decimal OriginalPrice,
     decimal InternetPrice,
     string? Currency,
-    IReadOnlyList<Feature> Features,
-    int TotalFeatureCount)
+    IReadOnlyList<Feature> Features)
 {
-    /// <summary>
-    /// Yer sınırı nedeniyle gösterilmeyen Feature sayısı.
-    /// </summary>
-    /// <remarks>
-    /// Kullanıcıya listenin tamamlanmadığını bildirmek için; aksi hâlde
-    /// dört özellik gösterilen bir sefer, dört özelliği olan bir seferden
-    /// ayırt edilemezdi.
-    /// </remarks>
-    public int HiddenFeatureCount => Math.Max(0, TotalFeatureCount - Features.Count);
-
     /// <summary>
     /// Liste fiyatının satış fiyatından yüksek olup olmadığını söyler.
     /// </summary>

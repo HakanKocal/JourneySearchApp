@@ -31,17 +31,4 @@ public sealed record Feature(
     string Name,
     bool IsPromoted,
     string? BackgroundColor,
-    string? ForegroundColor)
-{
-    /// <summary>
-    /// Kartta gösterilecek azami özellik sayısı.
-    /// </summary>
-    /// <remarks>
-    /// Canlı veride bir seferin 8 özelliği olabiliyor ve dağılım 3–5'te
-    /// yoğunlaşıyor. Hepsini yan yana koymak 320 piksel genişlikte kart
-    /// yüksekliklerini bozar; tasarım geçişinde tam bu tür bir kusur
-    /// düzeltilmişti. Dört öğe, seferlerin çoğunda hiç kırpma yapmadan
-    /// kart yüksekliğini sabit tutuyor.
-    /// </remarks>
-    public const int MaxDisplayed = 4;
-}
+    string? ForegroundColor);
