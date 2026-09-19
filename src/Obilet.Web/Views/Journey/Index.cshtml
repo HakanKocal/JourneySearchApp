@@ -194,43 +194,72 @@
                              data-price="@sortPrice"
                              data-duration="@sortDuration">
 
-                        @* Saatler, süre ve terminaller tek kolonda. *@
-                        <div class="journey-trip">
-                            <div class="journey-times">
-                                <div>
-                                    <div class="journey-time-label">@L["Journey_Departure"]</div>
-                                    <div class="journey-time">@journey.Departure.ToString("HH:mm")</div>
+                        @*
+                            Saatler/nitelikler ile terminaller iki ayrı ızgara
+                            öğesi. Bir sarmalayıcı içinde de durabilirlerdi ama o
+                            zaman dar ekranda ikisi birlikte fiyatla aynı satırı
+                            paylaşmak zorunda kalıyor ve kolona 202px kalıyordu;
+                            ölçüm için bkz. obilet.css. Ayrı öğe olunca dar
+                            ekranda saatler kartın tam genişliğini alıyor,
+                            fiyat terminallerin yanına iniyor.
+                        *@
+                        <div class="journey-times">
+                            <div>
+                                <div class="journey-time-label">@L["Journey_Departure"]</div>
+                                <div class="journey-time">@journey.Departure.ToString("HH:mm")</div>
+                            </div>
+
+                            <span class="journey-arrow">
+                                <svg class="icon" aria-hidden="true"><use href="#icon-arrow-right" /></svg>
+                            </span>
+
+                            <div>
+                                <div class="journey-time-label">@L["Journey_Arrival"]</div>
+                                <div class="journey-time">@journey.Arrival.ToString("HH:mm")</div>
+                            </div>
+
+                            @if (duration is not null)
+                            {
+                                <div class="journey-spec">
+                                    <div class="journey-time-label">@L["Journey_Duration"]</div>
+                                    <div class="journey-spec-value">@duration</div>
                                 </div>
+                            }
 
-                                <span class="journey-arrow">
-                                    <svg class="icon" aria-hidden="true"><use href="#icon-arrow-right" /></svg>
-                                </span>
+                            @*
+                                Koltuk düzeni (2+1, 2+2). Süreyle aynı desende
+                                çiziliyor çünkü ikisi de seferin sabit bir
+                                niteliği — olanaklar gibi opsiyonel bir donanım
+                                değil. Yanındaki koltuk ikonu, "2+1" gibi kendi
+                                başına anlamı olmayan bir değeri bağlamına
+                                oturtuyor.
 
-                                <div>
-                                    <div class="journey-time-label">@L["Journey_Arrival"]</div>
-                                    <div class="journey-time">@journey.Arrival.ToString("HH:mm")</div>
-                                </div>
-
-                                @if (duration is not null)
-                                {
-                                    <div class="journey-duration">
-                                        <div class="journey-time-label">@L["Journey_Duration"]</div>
-                                        <div class="journey-duration-value">@duration</div>
+                                API bu alanı bildirmeyebiliyor; o zaman hücre
+                                hiç çizilmiyor, boş bir etiket görünmüyor.
+                            *@
+                            @if (!string.IsNullOrWhiteSpace(journey.BusType))
+                            {
+                                <div class="journey-spec"
+                                     title="@L["Journey_SeatLayoutTitleFormat", journey.BusType]">
+                                    <div class="journey-time-label">@L["Journey_SeatLayout"]</div>
+                                    <div class="journey-spec-value journey-seat">
+                                        <svg class="icon" aria-hidden="true"><use href="#icon-seat" /></svg>
+                                        @journey.BusType
                                     </div>
-                                }
-                            </div>
+                                </div>
+                            }
+                        </div>
 
-                            <div class="journey-stations">
-                                <span class="journey-station">
-                                    <svg class="icon" aria-hidden="true"><use href="#icon-pin" /></svg>
-                                    <span title="@journey.OriginStation">@journey.OriginStation</span>
-                                </span>
-                                <span>&ndash;</span>
-                                <span class="journey-station">
-                                    <svg class="icon" aria-hidden="true"><use href="#icon-pin" /></svg>
-                                    <span title="@journey.DestinationStation">@journey.DestinationStation</span>
-                                </span>
-                            </div>
+                        <div class="journey-stations">
+                            <span class="journey-station">
+                                <svg class="icon" aria-hidden="true"><use href="#icon-pin" /></svg>
+                                <span title="@journey.OriginStation">@journey.OriginStation</span>
+                            </span>
+                            <span>&ndash;</span>
+                            <span class="journey-station">
+                                <svg class="icon" aria-hidden="true"><use href="#icon-pin" /></svg>
+                                <span title="@journey.DestinationStation">@journey.DestinationStation</span>
+                            </span>
                         </div>
 
                         @*

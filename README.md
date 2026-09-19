@@ -10,7 +10,7 @@ Arayüz verilen iki masaüstü tasarımını izler.
 
 **Ana sayfa** fotoğraf zeminli bir hero taşır: sol tarafta başlık ve tanıtım metni, üzerine binen beyaz bir arama kartı, hero'nun altında dört maddelik bir tanıtım şeridi. Arama kartında hızlı tarih çipleri (`Bugün` / `Yarın`), aranabilir kalkış ve varış alanları, aralarında bir takas düğmesi ve bir tarih alanı var.
 
-**Sefer listesi** aynı hero'nun kısa hâlini, üzerine binen bir sorgu özeti kartını ve her seferi tek satırda gösteren yatay kartları taşır. Tek satırlık düzen 1200px'ten başlar; altındaki genişliklerde kart yığılı düzene geçer ve olanaklar kendi satırını alır. Özet kartındaki tarih çipleri ve yön çevirme ikonu gerçek bağlantı: aynı güzergâhın başka gününe veya ters yönüne tek tıkla gidilir. Kartta kalkış, varış, süre, terminaller, olanaklar, firma ve fiyat yer alır.
+**Sefer listesi** aynı hero'nun kısa hâlini, üzerine binen bir sorgu özeti kartını ve her seferi tek satırda gösteren yatay kartları taşır. Tek satırlık düzen 1200px'ten başlar; altındaki genişliklerde kart yığılı düzene geçer ve olanaklar kendi satırını alır. Özet kartındaki tarih çipleri ve yön çevirme ikonu gerçek bağlantı: aynı güzergâhın başka gününe veya ters yönüne tek tıkla gidilir. Kartta kalkış, varış, süre, koltuk düzeni (`2+1` / `2+2`), terminaller, olanaklar, firma ve fiyat yer alır.
 
 Kurulum mobil-öncelikli: taban stiller dar ekranı tarif eder, medya sorguları genişlikte verilen masaüstü düzenine açar. Gerekçe ve kaydedilen ödünleşmeler `docs/adr/0007`'de.
 
@@ -79,7 +79,7 @@ Bu durumda uygulama hâlâ Elasticsearch'e yazmayı dener, ulaşamaz ve günlük
 ### Testler
 
 ```bash
-dotnet test                # 201 test
+dotnet test                # 205 test
 node --test tests/js/      # 26 test
 ```
 
@@ -163,7 +163,7 @@ Obilet.sln
 │   ├── Obilet.Application/     Servisler, alan modelleri, arayüzler, kurallar
 │   └── Obilet.Infrastructure/  obilet API istemcisi, önbellek, yapılandırma
 ├── tests/
-│   ├── Obilet.Tests/           xUnit (201 test)
+│   ├── Obilet.Tests/           xUnit (205 test)
 │   └── js/                     Node test runner (26 test)
 └── docs/adr/                   Mimari karar kayıtları
 ```
@@ -185,6 +185,7 @@ Ayrı bir Domain katmanı **bilinçli olarak yok**: uygulama hiçbir varlığa s
 | Para biçimi | Sayı biçimi kültürden, para birimi API'nin bildirdiği koddan |
 | Tarih hesabı | "Bugün" sunucunun değil **pazarın** saat diliminden okunur (`IMarketClock`) |
 | Olanaklar | Sefer kartında ikon olarak, **tamamı**; tanıtımlı olanlar (indirim kodları) renkli etiket (`docs/adr/0006`, `0008`) |
+| Koltuk düzeni | Kartta süreyle aynı desende, koltuk ikonuyla; ikisi de seferin değişmez ölçüsü (`docs/adr/0009`) |
 | Sıkıştırma | Brotli ve gzip, `Optimal` seviyede; 2,2 MB'lık sefer listesi ağdan 19.952 bayt gidiyor (`docs/adr/0008`) |
 | Günlükleme | Serilog; konsol her zaman, Elasticsearch opsiyonel. ECS biçimi, Kibana ile görüntülenir |
 | Tasarım | Verilen masaüstü tasarımlarından, mobil-öncelikli kurulumla (`docs/adr/0007`) |
@@ -204,7 +205,7 @@ Bunlar eksiklik değil, tercih:
 - **Sayfalama.** Şartname seferlerin sıralı gösterilmesini istiyor; sayfalama veya üst sınır uydurmak veri düşürmüş gibi görünme riski taşıyordu. İnce projeksiyon ve yanıt sıkıştırma birlikte maliyeti zaten kabul edilebilir kıldı: 462 seferlik bir liste ağdan 19.952 bayt gidiyor (`docs/adr/0008`). Geriye kalan maliyet tarayıcının 2,2 MB HTML ayrıştırması; gerçek bir üründe sonraki adım budur.
 - **Entegrasyon testleri.** `WebApplicationFactory` ile controller testleri yazılmadı; testler saf mantığa ve API istemcisinin yanıt yorumlamasına odaklandı — projenin gerçek riski orada.
 - **Sefer detay sayfası ve satın alma.** Şartname kapsamında değil. Verilen tasarımda kartın sağ ucunda bir "Seç" düğmesi var; düğme görsel olarak duruyor ama **devre dışı** ve sebebi bir açıklama metniyle veriliyor. Çalışıyormuş gibi görünüp hiçbir şey yapan bir düğme, olmayan bir düğmeden daha yanıltıcı olurdu.
-- **Koltuk sayısı ve otobüs tipi.** Verilen tasarımların hiçbiri sefer satırında göstermiyor ve karar verirken fiyatı etkileyen bir bilgi taşımıyorlar. Veri modelde mevcut, yalnızca gösterilmiyor.
+- **Koltuk sayısı.** `total-seats` ve `available-seats` modelde mevcut ama gösterilmiyor: verilen tasarımların hiçbiri sefer satırında göstermiyor ve yolcunun kararını doğrudan değiştirmiyorlar. **Koltuk düzeni** (`2+1`, `2+2`) ise gösteriliyor — 2+1 ile 2+2 arasındaki fark yolcunun aldığı şeyi değiştiriyor; bkz. `docs/adr/0009`.
 
 ## Kod incelemesinde bulunan ve düzeltilen kusurlar
 

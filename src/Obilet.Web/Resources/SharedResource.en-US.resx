@@ -273,4 +273,11 @@
   <data name="Journey_SortDuration" xml:space="preserve">
     <value>Shortest Duration</value>
   </data>
+  <data name="Journey_SeatLayout" xml:space="preserve">
+    <value>Layout</value>
+    <comment>Micro label on the card, beside departure, arrival and duration. Kept short because four labels share one row; the full wording "seat layout" appears in the tooltip.</comment>
+  </data>
+  <data name="Journey_SeatLayoutTitleFormat" xml:space="preserve">
+    <value>Seat layout: {0}</value>
+  </data>
 </root>

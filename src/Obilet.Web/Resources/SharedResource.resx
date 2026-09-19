@@ -270,4 +270,11 @@
   <data name="Journey_SortDuration" xml:space="preserve">
     <value>En Kısa Süre</value>
   </data>
+  <data name="Journey_SeatLayout" xml:space="preserve">
+    <value>Düzen</value>
+    <comment>Kartta kalkış, varış ve süre etiketlerinin yanındaki mikro etiket. Kısa tutuluyor çünkü aynı satırda üç etiketle yan yana duruyor; tam karşılığı "koltuk düzeni" ve o hâli ipucu metninde geçiyor.</comment>
+  </data>
+  <data name="Journey_SeatLayoutTitleFormat" xml:space="preserve">
+    <value>Koltuk düzeni: {0}</value>
+  </data>
 </root>
