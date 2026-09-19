@@ -7,34 +7,63 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#2346B8" />
     <title>@ViewData["Title"] - @L["App_Name"]</title>
+    @*
+        Sıra önemli: kendi stil dosyamız en sonda yüklenir.
+
+        Sebebi ölçülen bir hata: Tom Select'in CSS'i `Styles` bölümünden
+        geliyor ve obilet.css'ten sonra yüklendiğinde, alanın kendi chevron
+        ikonunun yanına bir de kendi açılır liste okunu koyuyordu — aynı
+        alanda iki ok. Üçüncü parti CSS'i seçici özgüllüğü yarışıyla
+        yenmeye çalışmak yerine yükleme sırası düzeltildi: bizim dosyamız
+        her zaman son sözü söyler.
+
+        Karşılığı, sayfaya özel bir `Styles` bloğunun obilet.css'i
+        ezemeyecek olması. Sayfaya özel stiller zaten obilet.css içinde
+        yaşıyor, dolayısıyla bu bir kısıt değil.
+    *@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/obilet.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
+    <link rel="stylesheet" href="~/css/obilet.css" asp-append-version="true" />
 </head>
 <body>
     @*
-        Şartnamedeki üst çubuk boş: logo, menü veya metin taşımıyor. Sefer
-        sayfası kendi mavi başlığını getirdiği için oradaki çubuğun yerini
-        o alır; bu yüzden başlık bir bölüm olarak devredilebilir.
+        İkon sembolleri bir kez çizilir; sayfalar `use` ile çağırır.
+        Gerekçe _IconSprite.cshtml içinde.
     *@
-    @if (IsSectionDefined("Header"))
-    {
-        @await RenderSectionAsync("Header")
-    }
-    else
-    {
-        <header class="obilet-topbar"></header>
-    }
+    <partial name="_IconSprite" />
 
     <main role="main">
+        @*
+            Her iki sayfa da kendi hero bölümünü getiriyor: tasarımda ortak
+            bir üst çubuk yok, hero'nun kendisi başlığın yerini alıyor. Hata
+            sayfalarının hero'su olmadığı için bölüm zorunlu değil.
+
+            Hero `main` içinde: sayfanın h1 başlığını ve ana sayfada arama
+            formunu taşıyor, yani asıl içeriğin parçası. Dışına almak formu
+            ana içerik bölgesinin dışında bırakırdı.
+        *@
+        @await RenderSectionAsync("Hero", required: false)
+
         @RenderBody()
     </main>
 
-    <footer class="py-3 text-center small text-muted">
-        <div>&copy; 2026 &middot; @L["App_Name"]</div>
-        <div class="mt-1">
-            <partial name="_LanguageSwitcher" />
+    <footer class="obilet-footer">
+        <div class="container">
+            <div>&copy; 2026 &middot; @L["App_Name"]</div>
+
+            @*
+                Dil değiştirici hero'nun sağ üst köşesine taşındı. Hero'suz
+                sayfalarda (hata ekranları) erişilebilir kalması için alt
+                bilgideki kopya duruyor.
+            *@
+            @if (!IsSectionDefined("Hero"))
+            {
+                <div class="mt-2">
+                    <partial name="_LanguageSwitcher" />
+                </div>
+            }
         </div>
     </footer>
 

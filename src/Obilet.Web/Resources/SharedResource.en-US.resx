@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!--
     İngilizce kaynak dosyası.
@@ -89,7 +89,7 @@
     <value>Date</value>
   </data>
   <data name="Search_Submit" xml:space="preserve">
-    <value>Find Tickets</value>
+    <value>Search Buses</value>
   </data>
   <data name="Search_NoLocations" xml:space="preserve">
     <value>Locations could not be loaded. Please try again later.</value>
@@ -136,7 +136,7 @@
     <value>You can try a different date or change the origin and destination.</value>
   </data>
   <data name="Journey_CountFormat" xml:space="preserve">
-    <value>{0} buses found.</value>
+    <value>{0} Buses Found</value>
     <comment>{0} = sefer sayısı</comment>
   </data>
   <data name="Journey_NextDayFormat" xml:space="preserve">
@@ -208,5 +208,77 @@
   <data name="Culture_English" xml:space="preserve">
     <value>English</value>
     <comment>Dil adları her zaman kendi dilinde yazılır; çevrilmez.</comment>
+  </data>
+  <data name="Home_Eyebrow" xml:space="preserve">
+    <value>Everywhere in Türkiye</value>
+  </data>
+  <data name="Home_TitleLine1" xml:space="preserve">
+    <value>The Easiest Way</value>
+    <comment>First line of the hero heading. Together with the second line it forms one sentence; the line break falls in a different place in each language, so the two lines are separate keys.</comment>
+  </data>
+  <data name="Home_TitleLine2" xml:space="preserve">
+    <value>To Travel by Bus</value>
+    <comment>Second line of the hero heading; see Home_TitleLine1.</comment>
+  </data>
+  <data name="Home_Lead" xml:space="preserve">
+    <value>Plan your intercity journeys safely, comfortably and affordably.</value>
+  </data>
+  <data name="Home_ValueStrip" xml:space="preserve">
+    <value>Why travel with us</value>
+  </data>
+  <data name="Home_Value1_Title" xml:space="preserve">
+    <value>Safe Travel</value>
+  </data>
+  <data name="Home_Value1_Text" xml:space="preserve">
+    <value>Every one of our buses is insured.</value>
+  </data>
+  <data name="Home_Value2_Title" xml:space="preserve">
+    <value>Comfortable Seats</value>
+  </data>
+  <data name="Home_Value2_Text" xml:space="preserve">
+    <value>A comfortable ride is waiting for you.</value>
+  </data>
+  <data name="Home_Value3_Title" xml:space="preserve">
+    <value>Easy Booking</value>
+  </data>
+  <data name="Home_Value3_Text" xml:space="preserve">
+    <value>Buy your ticket quickly and simply.</value>
+  </data>
+  <data name="Home_Value4_Title" xml:space="preserve">
+    <value>24/7 Support</value>
+  </data>
+  <data name="Home_Value4_Text" xml:space="preserve">
+    <value>We are here whenever you need us.</value>
+  </data>
+  <data name="Journey_PageTitle" xml:space="preserve">
+    <value>Travel Options</value>
+  </data>
+  <data name="Journey_PageLead" xml:space="preserve">
+    <value>Review the best bus options for your route.</value>
+  </data>
+  <data name="Journey_BackHome" xml:space="preserve">
+    <value>Back to Home</value>
+  </data>
+  <data name="Journey_SwapDirection" xml:space="preserve">
+    <value>Reverse the direction of travel</value>
+  </data>
+  <data name="Journey_Select" xml:space="preserve">
+    <value>Select</value>
+  </data>
+  <data name="Journey_SelectUnavailable" xml:space="preserve">
+    <value>Seat selection and checkout are outside the scope of this application.</value>
+    <comment>Explains the disabled Select button. The button appears in the supplied design, so it is kept visually, but it does not work and the reason is surfaced here.</comment>
+  </data>
+  <data name="Journey_Sort" xml:space="preserve">
+    <value>Sort</value>
+  </data>
+  <data name="Journey_SortDeparture" xml:space="preserve">
+    <value>Earliest Departure</value>
+  </data>
+  <data name="Journey_SortPrice" xml:space="preserve">
+    <value>Lowest Price</value>
+  </data>
+  <data name="Journey_SortDuration" xml:space="preserve">
+    <value>Shortest Duration</value>
   </data>
 </root>

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!--
     Varsayılan (nötr) kaynak dosyası: Türkçe.
@@ -86,7 +86,7 @@
     <value>Tarih</value>
   </data>
   <data name="Search_Submit" xml:space="preserve">
-    <value>Bileti Bul</value>
+    <value>Seferleri Sorgula</value>
   </data>
   <data name="Search_NoLocations" xml:space="preserve">
     <value>Lokasyon listesi alınamadı. Lütfen daha sonra tekrar deneyin.</value>
@@ -133,7 +133,7 @@
     <value>Başka bir tarih deneyebilir veya kalkış ve varış noktalarını değiştirebilirsiniz.</value>
   </data>
   <data name="Journey_CountFormat" xml:space="preserve">
-    <value>{0} sefer bulundu.</value>
+    <value>{0} Sefer Bulundu</value>
     <comment>{0} = sefer sayısı</comment>
   </data>
   <data name="Journey_NextDayFormat" xml:space="preserve">
@@ -205,5 +205,77 @@
   <data name="Culture_English" xml:space="preserve">
     <value>English</value>
     <comment>Dil adları her zaman kendi dilinde yazılır; çevrilmez.</comment>
+  </data>
+  <data name="Home_Eyebrow" xml:space="preserve">
+    <value>Türkiye'nin Her Yerine</value>
+  </data>
+  <data name="Home_TitleLine1" xml:space="preserve">
+    <value>Otobüsle Seyahat</value>
+    <comment>Hero başlığının birinci satırı. İkinci satırla birlikte tek bir cümle kurar; satır bölünmesi diller arasında farklı yerde olduğu için iki ayrı anahtar olarak tutuluyor.</comment>
+  </data>
+  <data name="Home_TitleLine2" xml:space="preserve">
+    <value>Etmenin En Kolay Yolu</value>
+    <comment>Hero başlığının ikinci satırı; bkz. Home_TitleLine1.</comment>
+  </data>
+  <data name="Home_Lead" xml:space="preserve">
+    <value>Şehirler arası yolculuklarınızı güvenli, konforlu ve ekonomik şekilde planlayın.</value>
+  </data>
+  <data name="Home_ValueStrip" xml:space="preserve">
+    <value>Neden bizimle seyahat etmelisiniz</value>
+  </data>
+  <data name="Home_Value1_Title" xml:space="preserve">
+    <value>Güvenli Yolculuk</value>
+  </data>
+  <data name="Home_Value1_Text" xml:space="preserve">
+    <value>Tüm seferlerimiz güvence altındadır.</value>
+  </data>
+  <data name="Home_Value2_Title" xml:space="preserve">
+    <value>Rahat Koltuklar</value>
+  </data>
+  <data name="Home_Value2_Text" xml:space="preserve">
+    <value>Konforlu bir yolculuk sizi bekliyor.</value>
+  </data>
+  <data name="Home_Value3_Title" xml:space="preserve">
+    <value>Kolay Rezervasyon</value>
+  </data>
+  <data name="Home_Value3_Text" xml:space="preserve">
+    <value>Hızlı ve pratik bilet alma imkânı.</value>
+  </data>
+  <data name="Home_Value4_Title" xml:space="preserve">
+    <value>7/24 Destek</value>
+  </data>
+  <data name="Home_Value4_Text" xml:space="preserve">
+    <value>Her zaman yanınızdayız.</value>
+  </data>
+  <data name="Journey_PageTitle" xml:space="preserve">
+    <value>Seyahat Seçenekleri</value>
+  </data>
+  <data name="Journey_PageLead" xml:space="preserve">
+    <value>İstediğiniz güzergâh için en uygun otobüs seferlerini inceleyin.</value>
+  </data>
+  <data name="Journey_BackHome" xml:space="preserve">
+    <value>Ana Sayfaya Dön</value>
+  </data>
+  <data name="Journey_SwapDirection" xml:space="preserve">
+    <value>Gidiş yönünü ters çevir</value>
+  </data>
+  <data name="Journey_Select" xml:space="preserve">
+    <value>Seç</value>
+  </data>
+  <data name="Journey_SelectUnavailable" xml:space="preserve">
+    <value>Koltuk seçimi ve satın alma bu uygulamanın kapsamı dışında.</value>
+    <comment>Devre dışı Seç düğmesinin açıklaması. Düğme tasarımda yer aldığı için görsel olarak duruyor ama çalışmıyor; sebebi kullanıcıya burada bildiriliyor.</comment>
+  </data>
+  <data name="Journey_Sort" xml:space="preserve">
+    <value>Sıralama</value>
+  </data>
+  <data name="Journey_SortDeparture" xml:space="preserve">
+    <value>En Erken Kalkış</value>
+  </data>
+  <data name="Journey_SortPrice" xml:space="preserve">
+    <value>En Düşük Fiyat</value>
+  </data>
+  <data name="Journey_SortDuration" xml:space="preserve">
+    <value>En Kısa Süre</value>
   </data>
 </root>

@@ -25,22 +25,28 @@
 }
 
 @*
-    Dil değiştirici alt kısımda duruyor. Şartnamedeki üst çubuk boş ve sefer
-    sayfası kendi başlığını getirdiği için, her iki sayfada da görünen ve
-    tasarımla çakışmayan tek yer burası.
+    Dil değiştirici hero'nun sağ üst köşesinde duruyor: verilen tasarımda
+    hero üst satırının sağ tarafı boş ve bir dil seçiminin bulunması
+    beklenen yer orası. Hero'suz sayfalarda (hata ekranları) alt bilgide
+    görünür; renkler `.hero-lang` içinde zemine göre değişiyor.
 *@
 <form asp-controller="Culture" asp-action="Set" method="post"
       class="d-inline-flex align-items-center gap-2">
     <input type="hidden" name="returnUrl" value="@returnUrl" />
 
-    <span class="text-muted">@L["Culture_Label"]:</span>
+    <span class="culture-label">@L["Culture_Label"]:</span>
 
     @foreach (var language in languages)
     {
         var isCurrent = string.Equals(language.Code, currentCulture, StringComparison.OrdinalIgnoreCase);
 
+        @*
+            Renk `text-muted` ile değil CSS'ten veriliyor: o yardımcı sınıf
+            `!important` taşıyor ve mavi hero üzerinde okunamayan bir griyi
+            zorluyordu.
+        *@
         <button type="submit" name="culture" value="@language.Code"
-                class="btn btn-link btn-sm p-0 text-decoration-none @(isCurrent ? "fw-semibold" : "text-muted")"
+                class="btn btn-link btn-sm p-0 text-decoration-none @(isCurrent ? "fw-semibold" : string.Empty)"
                 aria-current="@(isCurrent ? "true" : "false")"
                 @(isCurrent ? "disabled" : null)>
             @language.Name

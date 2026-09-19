@@ -4,6 +4,16 @@ obilet.com business API'si üzerinden şehirler arası otobüs seferi arayan iki
 
 Tüm API çağrıları uygulama backend'inde yapılır. Tarayıcı yalnızca uygulamanın kendi uç noktalarıyla konuşur; `ApiClientToken` ve oturum kimlikleri istemciye hiç ulaşmaz.
 
+## Arayüz
+
+Arayüz verilen iki masaüstü tasarımını izler.
+
+**Ana sayfa** fotoğraf zeminli bir hero taşır: sol tarafta başlık ve tanıtım metni, üzerine binen beyaz bir arama kartı, hero'nun altında dört maddelik bir tanıtım şeridi. Arama kartında hızlı tarih çipleri (`Bugün` / `Yarın`), aranabilir kalkış ve varış alanları, aralarında bir takas düğmesi ve bir tarih alanı var.
+
+**Sefer listesi** aynı hero'nun kısa hâlini, üzerine binen bir sorgu özeti kartını ve her seferi tek satırda gösteren yatay kartları taşır. Özet kartındaki tarih çipleri ve yön çevirme ikonu gerçek bağlantı: aynı güzergâhın başka gününe veya ters yönüne tek tıkla gidilir. Kartta kalkış, varış, süre, terminaller, olanaklar, firma ve fiyat yer alır.
+
+Kurulum mobil-öncelikli: taban stiller dar ekranı tarif eder, medya sorguları genişlikte verilen masaüstü düzenine açar. Gerekçe ve kaydedilen ödünleşmeler `docs/adr/0007`'de.
+
 ---
 
 ## Çalıştırma
@@ -69,8 +79,8 @@ Bu durumda uygulama hâlâ Elasticsearch'e yazmayı dener, ulaşamaz ve günlük
 ### Testler
 
 ```bash
-dotnet test                # 133 test
-node --test tests/js/      # 18 test
+dotnet test                # 201 test
+node --test tests/js/      # 26 test
 ```
 
 JavaScript testleri .NET paketine dâhil değildir: test edilen mantık `localStorage` ve tarayıcı davranışı üzerine kurulu olduğu için ancak bir JavaScript çalıştırıcısı doğrulayabilir.
@@ -153,8 +163,8 @@ Obilet.sln
 │   ├── Obilet.Application/     Servisler, alan modelleri, arayüzler, kurallar
 │   └── Obilet.Infrastructure/  obilet API istemcisi, önbellek, yapılandırma
 ├── tests/
-│   ├── Obilet.Tests/           xUnit (133 test)
-│   └── js/                     Node test runner (18 test)
+│   ├── Obilet.Tests/           xUnit (201 test)
+│   └── js/                     Node test runner (26 test)
 └── docs/adr/                   Mimari karar kayıtları
 ```
 
@@ -176,7 +186,9 @@ Ayrı bir Domain katmanı **bilinçli olarak yok**: uygulama hiçbir varlığa s
 | Tarih hesabı | "Bugün" sunucunun değil **pazarın** saat diliminden okunur (`IMarketClock`) |
 | Olanaklar | Sefer kartında ikon olarak; tanıtımlı olanlar (indirim kodları) renkli etiket (`docs/adr/0006`) |
 | Günlükleme | Serilog; konsol her zaman, Elasticsearch opsiyonel. ECS biçimi, Kibana ile görüntülenir |
-| Tasarım | Mobil-öncelikli responsive; şartname yalnızca mobil (`docs/adr/0005`) |
+| Tasarım | Verilen masaüstü tasarımlarından, mobil-öncelikli kurulumla (`docs/adr/0007`) |
+| Sıralama | Varsayılan sıra sunucuda; liste sayfasındaki sıralama kutusu istemcide çalışır, API'ye yeni istek atmaz |
+| İkonlar | Tek bir satır içi SVG sprite; ikon kütüphanesi bağımlılığı yok |
 
 ### Alan sözlüğü
 
@@ -190,8 +202,8 @@ Bunlar eksiklik değil, tercih:
 
 - **Sayfalama.** Şartname seferlerin sıralı gösterilmesini istiyor; sayfalama veya üst sınır uydurmak veri düşürmüş gibi görünme riski taşıyordu. İnce projeksiyon asıl maliyeti (3,2 MB → ~230 KB) zaten çözdü. Gerçek bir üründe sonraki adım budur.
 - **Entegrasyon testleri.** `WebApplicationFactory` ile controller testleri yazılmadı; testler saf mantığa ve API istemcisinin yanıt yorumlamasına odaklandı — projenin gerçek riski orada.
-- **Sefer detay sayfası ve satın alma.** Şartname kapsamında değil.
-- **Koltuk sayısı ve otobüs tipi.** Tasarım şartnamesi sefer satırında göstermiyor ve karar verirken fiyatı etkileyen bir bilgi taşımıyorlar.
+- **Sefer detay sayfası ve satın alma.** Şartname kapsamında değil. Verilen tasarımda kartın sağ ucunda bir "Seç" düğmesi var; düğme görsel olarak duruyor ama **devre dışı** ve sebebi bir açıklama metniyle veriliyor. Çalışıyormuş gibi görünüp hiçbir şey yapan bir düğme, olmayan bir düğmeden daha yanıltıcı olurdu.
+- **Koltuk sayısı ve otobüs tipi.** Verilen tasarımların hiçbiri sefer satırında göstermiyor ve karar verirken fiyatı etkileyen bir bilgi taşımıyorlar. Veri modelde mevcut, yalnızca gösterilmiyor.
 
 ## Kod incelemesinde bulunan ve düzeltilen kusurlar
 
@@ -209,3 +221,5 @@ Düzeltmeleri yazarken bir de kendi hatamı buldum: `25:30:00` için eklediğim 
 - **Türkçe arama katlaması iki yerde:** C# (`TurkishSearchText`) ve JavaScript (`search-form.js`). Tek yerde tutmak mümkün değil, çünkü sunucu API sonucunu, istemci ise sayfayla birlikte gelen varsayılan listeyi süzüyor. Kuralların ayrışmaması gerektiği her iki dosyada yorumla belirtildi.
 - **Tarih alanının görünen biçimi** yerel tarayıcı seçicisinden gelir ve işletim sisteminin diline göre belirlenir, sayfanın diline göre değil. Yerel seçiciyi değiştirmek erişilebilirlik ve mobil klavye desteğinden ödün vermek olurdu.
 - **`ApiClientToken` `appsettings.json` içinde.** Ödev dokümanında açıkça verildiği ve projenin kurulumsuz çalışması gerektiği için. Gerçek bir üretim ortamında ortam değişkeni veya secret deposu kullanılır.
+- **Tanıtım etiketlerinin bazıları düşük kontrastlı.** Renkler API'den geliyor ve renk kararının sahibi operatör kabul edildi. İndirim kodlarında API yeşil bildiriyor ve tasarımdaki görünüm birebir çıkıyor; "Relax Sefer" gibi nitelik etiketlerinde gri bildiriyor ve o gri WCAG AA eşiğinin altında kalıyor. Kendi yeşilimiz yalnızca API renk bildirmediğinde varsayılan olarak kullanılıyor.
+- **Sıralama kutusu JavaScript gerektirir.** Varsayılan sıra — kalkış anına göre artan, yani şartnamenin istediği sıra — sunucuda kuruluyor, dolayısıyla JavaScript kapalıyken liste doğru sırada gelir; yalnızca fiyat ve süreye göre yeniden sıralama çalışmaz.

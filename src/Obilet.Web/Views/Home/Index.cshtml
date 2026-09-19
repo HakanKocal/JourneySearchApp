@@ -11,6 +11,16 @@
     var tomorrow = Model.Today.AddDays(1).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
     var selectedDate = Model.DepartureDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
     var minQueryLength = ILocationService.MinimumQueryLength;
+
+    // Olanak şeridi: dört maddenin ikonu ve metin anahtarları birlikte
+    // duruyor, böylece işaretleme dört kez tekrarlanmıyor.
+    var valueItems = new[]
+    {
+        (Icon: "shield", Title: "Home_Value1_Title", Text: "Home_Value1_Text"),
+        (Icon: "seat", Title: "Home_Value2_Title", Text: "Home_Value2_Text"),
+        (Icon: "clock", Title: "Home_Value3_Title", Text: "Home_Value3_Text"),
+        (Icon: "headset", Title: "Home_Value4_Title", Text: "Home_Value4_Text"),
+    };
 }
 
 @section Styles {
@@ -18,120 +28,161 @@
        gezinmesi, ARIA rolleri, dışa tıklama ve yarış koşulları demek;
        bunları doğru yapmak bu ödevin kapsamına göre orantısız. *@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/css/tom-select.bootstrap5.min.css" />
-    <style>
-        /* Tom Select'i şartnamedeki kart görünümüne uydurur: çerçevesiz,
-           kartın kendi beyaz zemini ve gölgesi görünür kalır. */
-        .field-card .ts-wrapper { margin: 0; }
-        .field-card .ts-control {
-            border: 0;
-            box-shadow: none;
-            padding: 0;
-            min-height: auto;
-            background: transparent;
-            font-size: 0.9375rem;
-            color: var(--obilet-slate);
-        }
-        .field-card .ts-control input { font-size: 0.9375rem; }
-        .field-card .ts-dropdown { margin-top: 0.25rem; }
-    </style>
 }
 
-<div class="container" style="max-width: 720px">
-    @*
-        Şartnamede görünür bir sayfa başlığı yok; tasarıma sadık kalmak için
-        başlık gizleniyor ama belge yapısında duruyor, aksi hâlde sayfa
-        ekran okuyucular için başlıksız kalırdı.
-    *@
-    <h1 class="visually-hidden">@L["Search_Title"]</h1>
+@section Hero {
+    <section class="hero hero--home">
+        @* Fotoğraf ve mavi perde ayrı katmanlar; gerekçe obilet.css içinde. *@
+        <div class="hero-media"></div>
+        <div class="hero-veil"></div>
 
-    <div class="search-panel mt-0 mt-md-4">
-        @if (Model.Locations.Count == 0)
-        {
-            <div class="alert alert-warning mb-0">@L["Search_NoLocations"]</div>
-        }
-        else
-        {
-            @*
-                Doğrulama özeti. Sunucudan hata geldiyse görünür başlar; aksi
-                hâlde gizli durur ve istemci tarafı ayna doğrulama açar.
-            *@
-            <div asp-validation-summary="All" id="validation-summary"
-                 class="alert alert-danger @(ViewData.ModelState.IsValid ? "d-none" : string.Empty)"></div>
+        <div class="container hero-inner">
+            <div class="hero-topline">
+                <span class="hero-brand">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-bus" /></svg>
+                    <span class="hero-brand-rule"></span>
+                    <span>@L["Home_Eyebrow"]</span>
+                </span>
 
-            @* Kaydedilmiş tarih eskimişse kullanıcıya bilgi verilir; değer
-               sessizce altından değiştirilmez. *@
-            <div class="alert alert-info d-none" id="date-adjusted-notice">@L["Search_DateAdjusted"]</div>
-
-            <form asp-controller="Home" asp-action="Search" method="post" id="search-form" novalidate>
-                @* Kalkış ve varış kartları; takas butonu aralarındaki dikişte. *@
-                <div class="location-fields">
-                    <div class="field-card">
-                        <label asp-for="OriginId" class="field-label d-block">@L["Search_Origin"]</label>
-                        <select asp-for="OriginId" id="origin" data-location-select>
-                            @foreach (var location in Model.Locations)
-                            {
-                                <option value="@location.Id">@location.Name</option>
-                            }
-                        </select>
-                    </div>
-
-                    <button type="button" class="swap-button" id="swap"
-                            title="@L["Search_Swap"]" aria-label="@L["Search_Swap"]">
-                        &#8645;
-                    </button>
-
-                    <div class="field-card">
-                        <label asp-for="DestinationId" class="field-label d-block">@L["Search_Destination"]</label>
-                        <select asp-for="DestinationId" id="destination" data-location-select>
-                            @foreach (var location in Model.Locations)
-                            {
-                                <option value="@location.Id">@location.Name</option>
-                            }
-                        </select>
-                    </div>
+                <div class="hero-lang">
+                    <partial name="_LanguageSwitcher" />
                 </div>
+            </div>
 
-                <div class="d-flex flex-column gap-1 mt-1">
-                    <span asp-validation-for="OriginId" class="text-danger small"></span>
-                    <span asp-validation-for="DestinationId" class="text-danger small"></span>
-                </div>
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    <span>@L["Home_TitleLine1"]</span>
+                    <span class="hero-title-soft">@L["Home_TitleLine2"]</span>
+                </h1>
 
-                @* Tarih kartı: şartnamede çipler kartın sağında dikey duruyor. *@
-                <div class="field-card mt-3">
-                    <div class="d-flex align-items-start justify-content-between gap-3">
-                        <div class="flex-grow-1">
-                            <label asp-for="DepartureDate" class="field-label d-block">@L["Search_Date"]</label>
-                            @*
-                                type="date" her zaman ISO biçimi gönderir, bu yüzden
-                                kültüre bağlı ayrıştırma sorunu oluşmaz. min özniteliği
-                                tarayıcı seviyesinde geçmiş tarihi engeller; aynı kural
-                                sunucuda da uygulanıyor, çünkü bu yalnızca bir kolaylık.
-                            *@
-                            <input asp-for="DepartureDate" type="date" id="departure-date"
-                                   class="border-0 p-0 w-100"
-                                   style="font-size: 0.9375rem; color: var(--obilet-slate)"
-                                   min="@today" value="@selectedDate" />
+                <p class="hero-lead">@L["Home_Lead"]</p>
+            </div>
+
+            <div class="search-card">
+                @if (Model.Locations.Count == 0)
+                {
+                    <div class="alert alert-warning mb-0">@L["Search_NoLocations"]</div>
+                }
+                else
+                {
+                    @*
+                        Doğrulama özeti. Sunucudan hata geldiyse görünür başlar;
+                        aksi hâlde gizli durur ve istemci tarafı ayna doğrulama açar.
+                    *@
+                    <div asp-validation-summary="All" id="validation-summary"
+                         class="alert alert-danger @(ViewData.ModelState.IsValid ? "d-none" : string.Empty)"></div>
+
+                    @* Kaydedilmiş tarih eskimişse kullanıcıya bilgi verilir; değer
+                       sessizce altından değiştirilmez. *@
+                    <div class="alert alert-info d-none" id="date-adjusted-notice">@L["Search_DateAdjusted"]</div>
+
+                    <form asp-controller="Home" asp-action="Search" method="post" id="search-form" novalidate>
+                        @* Tarih çipleri kartın üstünde; tasarımdaki yerleşim bu. *@
+                        <div class="date-chips">
+                            <button type="button" class="date-chip" id="chip-today" data-date="@today">
+                                <svg class="icon" aria-hidden="true"><use href="#icon-calendar" /></svg>
+                                @L["Search_Today"]
+                            </button>
+                            <button type="button" class="date-chip" id="chip-tomorrow" data-date="@tomorrow">
+                                <svg class="icon" aria-hidden="true"><use href="#icon-calendar" /></svg>
+                                @L["Search_Tomorrow"]
+                            </button>
+                        </div>
+
+                        @*
+                            Kalkış, takas, varış ve tarih. Dar ekranda dikey yığılı
+                            ve takas butonu ilk iki alanın dikişinde; geniş ekranda
+                            dördü tek satırda. Bkz. .search-fields.
+                        *@
+                        <div class="search-fields">
+                            <div class="field-card">
+                                <svg class="icon" aria-hidden="true"><use href="#icon-pin" /></svg>
+                                <div class="field-body">
+                                    <label asp-for="OriginId" class="field-label">@L["Search_Origin"]</label>
+                                    <select asp-for="OriginId" id="origin" data-location-select>
+                                        @foreach (var location in Model.Locations)
+                                        {
+                                            <option value="@location.Id">@location.Name</option>
+                                        }
+                                    </select>
+                                </div>
+                                <svg class="icon" aria-hidden="true"><use href="#icon-chevron-down" /></svg>
+                            </div>
+
+                            <button type="button" class="swap-button" id="swap"
+                                    title="@L["Search_Swap"]" aria-label="@L["Search_Swap"]">
+                                <svg class="icon" aria-hidden="true"><use href="#icon-swap" /></svg>
+                            </button>
+
+                            <div class="field-card">
+                                <svg class="icon" aria-hidden="true"><use href="#icon-pin" /></svg>
+                                <div class="field-body">
+                                    <label asp-for="DestinationId" class="field-label">@L["Search_Destination"]</label>
+                                    <select asp-for="DestinationId" id="destination" data-location-select>
+                                        @foreach (var location in Model.Locations)
+                                        {
+                                            <option value="@location.Id">@location.Name</option>
+                                        }
+                                    </select>
+                                </div>
+                                <svg class="icon" aria-hidden="true"><use href="#icon-chevron-down" /></svg>
+                            </div>
+
+                            <div class="field-card">
+                                <svg class="icon" aria-hidden="true"><use href="#icon-calendar" /></svg>
+                                <div class="field-body">
+                                    <label asp-for="DepartureDate" class="field-label">@L["Search_Date"]</label>
+                                    @*
+                                        type="date" her zaman ISO biçimi gönderir, bu yüzden
+                                        kültüre bağlı ayrıştırma sorunu oluşmaz. min özniteliği
+                                        tarayıcı seviyesinde geçmiş tarihi engeller; aynı kural
+                                        sunucuda da uygulanıyor, çünkü bu yalnızca bir kolaylık.
+                                    *@
+                                    <input asp-for="DepartureDate" type="date" id="departure-date"
+                                           class="field-value" min="@today" value="@selectedDate" />
+                                </div>
+                            </div>
                         </div>
 
                         <div class="d-flex flex-column gap-1">
-                            <button type="button" class="date-chip" id="chip-today"
-                                    data-date="@today">@L["Search_Today"]</button>
-                            <button type="button" class="date-chip" id="chip-tomorrow"
-                                    data-date="@tomorrow">@L["Search_Tomorrow"]</button>
+                            <span asp-validation-for="OriginId" class="text-danger small"></span>
+                            <span asp-validation-for="DestinationId" class="text-danger small"></span>
+                            <span asp-validation-for="DepartureDate" class="text-danger small"></span>
                         </div>
-                    </div>
-                </div>
 
-                <span asp-validation-for="DepartureDate" class="text-danger small d-block mt-1"></span>
+                        <button type="submit" class="btn-obilet">
+                            <svg class="icon" aria-hidden="true"><use href="#icon-search" /></svg>
+                            @L["Search_Submit"]
+                        </button>
+                    </form>
+                }
+            </div>
+        </div>
 
-                @* Şartnamede buton tam genişlik değil, ortalanmış. *@
-                <div class="text-center mt-4">
-                    <button type="submit" class="btn btn-obilet">@L["Search_Submit"]</button>
+        @* Hero'nun alt kenarındaki beyaz kıvrım; gerekçe obilet.css içinde. *@
+        <svg class="hero-curve" viewBox="0 0 1440 64" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0 64V18C200 0 420 6 720 22c300 16 520 22 720 14v28z" fill="currentColor" stroke="none" />
+        </svg>
+    </section>
+}
+
+@* Hero'nun altındaki dört maddelik şerit. *@
+<section class="value-strip" aria-label="@L["Home_ValueStrip"]">
+    <div class="container">
+        <div class="value-grid">
+            @foreach (var item in valueItems)
+            {
+                <div class="value-item">
+                    <span class="value-badge">
+                        <svg class="icon" aria-hidden="true"><use href="#icon-@item.Icon" /></svg>
+                    </span>
+                    <div class="value-title">@L[item.Title]</div>
+                    <p class="value-text">@L[item.Text]</p>
                 </div>
-            </form>
-        }
+            }
+        </div>
     </div>
-</div>
+</section>
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/js/tom-select.complete.min.js"></script>

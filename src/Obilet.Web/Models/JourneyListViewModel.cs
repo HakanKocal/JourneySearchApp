@@ -11,13 +11,26 @@ namespace Obilet.Web.Models;
 /// <param name="DepartureDate">Sorgulanan kalkış günü.</param>
 /// <param name="OriginName">Kalkış lokasyonunun adı; bulunamazsa <c>null</c>.</param>
 /// <param name="DestinationName">Varış lokasyonunun adı; bulunamazsa <c>null</c>.</param>
+/// <param name="Today">
+/// Pazarın saat diliminde bugünün tarihi.
+/// </param>
+/// <remarks>
+/// <para>
+/// <paramref name="Today"/> yalnızca bir görüntü değeri değil: sayfadaki
+/// "bugün" ve "yarın" çipleri bu tarihten üretiliyor. Sunucunun saat
+/// dilimi değil pazarın saat dilimi kullanılır, aksi hâlde konteyner UTC
+/// çalışırken gece saatlerinde çipler bir gün geride kalırdı;
+/// bkz. <c>IMarketClock</c>.
+/// </para>
+/// </remarks>
 public sealed record JourneyListViewModel(
     IReadOnlyList<Journey> Journeys,
     int OriginId,
     int DestinationId,
     DateOnly DepartureDate,
     string? OriginName,
-    string? DestinationName)
+    string? DestinationName,
+    DateOnly Today)
 {
     /// <summary>Hiç sefer bulunamadı mı?</summary>
     /// <remarks>

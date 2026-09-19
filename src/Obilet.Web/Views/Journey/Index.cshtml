@@ -1,3 +1,4 @@
+@using System.Globalization
 @using Microsoft.Extensions.Localization
 @using Obilet.Web
 @using Obilet.Web.Formatting
@@ -12,94 +13,301 @@
     // Gece yarısını aşan seferlerin başladığı sıra. Liste kronolojik olduğu
     // için bu seferler sonda toplanır ve araya bir ayırıcı konur.
     var nextDayIndex = Model.FirstNextDayIndex;
+
+    // Özet kartındaki hızlı tarih çipleri. Aynı güzergâhın bugün ve yarınki
+    // seferlerine giden gerçek bağlantılar; hangisinin geçerli olduğu
+    // sorgulanan tarihten anlaşılıyor.
+    var chips = new[]
+    {
+        (Date: Model.Today, Label: L["Search_Today"].Value),
+        (Date: Model.Today.AddDays(1), Label: L["Search_Tomorrow"].Value),
+    };
 }
 
 @*
-    Sefer listesi. Şartnamedeki mavi başlık ve iki satırlı gradyan kartlar
-    izlenir; firma adı ve logosu şartnamenin gösterdiğinden bir adım fazla,
-    çünkü operatörü göstermeyen bir sefer listesi inandırıcı bir ürün değil.
+    Sefer listesi. Verilen tasarım izleniyor: fotoğraf zeminli kısa bir hero,
+    üzerine binen sorgu özeti kartı, ve her seferi tek satırda gösteren yatay
+    kartlar.
 *@
 
-@section Header {
-    <header class="journey-header">
-        <div class="container position-relative" style="max-width: 720px">
-            @* Geri oku sol üstte, başlık ortalanmış — şartnamedeki yerleşim. *@
-            <a asp-controller="Home" asp-action="Index"
-               class="position-absolute start-0 top-0 ps-2 fs-5"
-               title="@L["Journey_Back"]" aria-label="@L["Journey_Back"]">
-                &larr;
-            </a>
+@section Hero {
+    <section class="hero hero--list">
+        <div class="hero-media"></div>
+        <div class="hero-veil"></div>
 
-            <div class="text-center">
-                @* Güzergâh adı sayfanın başlığıdır; görsel başlık aynı
-                   zamanda belge başlığı olarak işaretlenir. *@
-                <h1 class="journey-header-title mb-0">@originLabel &ndash; @destinationLabel</h1>
-                <div class="journey-header-subtitle">@Model.DepartureDate.ToString("d MMMM, dddd")</div>
+        <div class="container hero-inner">
+            <div class="hero-topline">
+                <a asp-controller="Home" asp-action="Index" class="pill-back">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-chevron-left" /></svg>
+                    @L["Journey_BackHome"]
+                </a>
+
+                <div class="hero-lang">
+                    <partial name="_LanguageSwitcher" />
+                </div>
+            </div>
+
+            <div class="hero-content">
+                @*
+                    Sayfanın h1'i güzergâh değil sayfanın kendisi; güzergâh
+                    hemen altındaki özet kartında ve belge başlığında yer
+                    alıyor. Tasarımdaki başlık da bu.
+                *@
+                <h1 class="hero-title">@L["Journey_PageTitle"]</h1>
+                <p class="hero-lead">@L["Journey_PageLead"]</p>
             </div>
         </div>
-    </header>
+
+        <svg class="hero-curve" viewBox="0 0 1440 64" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0 64V18C200 0 420 6 720 22c300 16 520 22 720 14v28z" fill="currentColor" stroke="none" />
+        </svg>
+    </section>
 }
 
-<div class="journey-page py-3">
-    <div class="container px-2" style="max-width: 720px">
+<div class="journey-page">
+    <div class="container">
+        @*
+            Sorgu özeti: hangi güzergâh ve hangi gün sorgulandı. Tasarımda
+            arama alanlarına benzeyen ama değer gösteren bir kart; burada da
+            öyle, ek olarak yön çevirme ve tarih çipleri gerçek bağlantı.
+        *@
+        <div class="summary-card">
+            <div class="summary-item">
+                <svg class="icon" aria-hidden="true"><use href="#icon-pin" /></svg>
+                <div class="field-body">
+                    <span class="field-label">@L["Search_Origin"]</span>
+                    <span class="summary-value" title="@originLabel">@originLabel</span>
+                </div>
+            </div>
+
+            <a class="summary-swap"
+               asp-controller="Journey" asp-action="Index"
+               asp-route-originId="@Model.DestinationId"
+               asp-route-destinationId="@Model.OriginId"
+               asp-route-date="@Model.DepartureDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)"
+               title="@L["Journey_SwapDirection"]" aria-label="@L["Journey_SwapDirection"]">
+                <svg class="icon" aria-hidden="true"><use href="#icon-swap" /></svg>
+            </a>
+
+            <div class="summary-item">
+                <svg class="icon" aria-hidden="true"><use href="#icon-pin" /></svg>
+                <div class="field-body">
+                    <span class="field-label">@L["Search_Destination"]</span>
+                    <span class="summary-value" title="@destinationLabel">@destinationLabel</span>
+                </div>
+            </div>
+
+            <div class="summary-item">
+                <svg class="icon" aria-hidden="true"><use href="#icon-calendar" /></svg>
+                <div class="field-body">
+                    <span class="field-label">@L["Search_Date"]</span>
+                    <span class="summary-value">@Model.DepartureDate.ToString("d MMMM yyyy")</span>
+                </div>
+            </div>
+
+            <div class="summary-chips">
+                @foreach (var chip in chips)
+                {
+                    var isActive = chip.Date == Model.DepartureDate;
+
+                    <a class="date-chip @(isActive ? "is-active" : string.Empty)"
+                       asp-controller="Journey" asp-action="Index"
+                       asp-route-originId="@Model.OriginId"
+                       asp-route-destinationId="@Model.DestinationId"
+                       asp-route-date="@chip.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)"
+                       aria-current="@(isActive ? "page" : "false")">
+                        <svg class="icon" aria-hidden="true"><use href="#icon-calendar" /></svg>
+                        @chip.Label
+                    </a>
+                }
+            </div>
+        </div>
+
         @if (Model.IsEmpty)
         {
             @* Boş sonuç bir hata değil: normal bir cevap olarak sunulur. *@
-            <div class="journey-card text-center py-4">
-                <div class="fw-semibold" style="color: var(--obilet-dark-slate)">@L["Journey_Empty"]</div>
-                <div class="small mt-2">@L["Journey_EmptyHint"]</div>
-                <a asp-controller="Home" asp-action="Index" class="btn btn-obilet mt-3">
-                    @L["Journey_Back"]
+            <div class="state-card">
+                <div class="state-title">@L["Journey_Empty"]</div>
+                <div class="small">@L["Journey_EmptyHint"]</div>
+                <a asp-controller="Home" asp-action="Index" class="btn-obilet btn-obilet--auto mt-3">
+                    @L["Journey_BackHome"]
                 </a>
             </div>
         }
         else
         {
-            <p class="small mb-2 px-1">@L["Journey_CountFormat", Model.Journeys.Count]</p>
+            <div class="list-toolbar">
+                <p class="list-count">@L["Journey_CountFormat", Model.Journeys.Count]</p>
 
-            @for (var index = 0; index < Model.Journeys.Count; index++)
-            {
-                var journey = Model.Journeys[index];
+                @*
+                    Sıralama istemci tarafında yapılıyor: liste zaten tamamen
+                    sayfada ve yeniden sorgulamak API'ye gereksiz bir istek
+                    olurdu. Varsayılan sıra kalkış anına göre artan ve bu
+                    sunucuda kuruluyor; açılır liste yalnızca gösterimi
+                    değiştiriyor, dolayısıyla JavaScript kapalıyken de liste
+                    doğru sırada geliyor.
+                *@
+                <label class="sort-field" for="journey-sort">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-sort" /></svg>
+                    <span class="visually-hidden">@L["Journey_Sort"]</span>
+                    <select id="journey-sort">
+                        <option value="departure">@L["Journey_SortDeparture"]</option>
+                        <option value="price">@L["Journey_SortPrice"]</option>
+                        <option value="duration">@L["Journey_SortDuration"]</option>
+                    </select>
+                    <svg class="icon" aria-hidden="true"><use href="#icon-chevron-down" /></svg>
+                </label>
+            </div>
 
-                @if (nextDayIndex == index)
+            <div id="journey-list">
+                @for (var index = 0; index < Model.Journeys.Count; index++)
                 {
-                    <div class="next-day-divider px-1 mb-2">
-                        @L["Journey_NextDayFormat", journey.Departure.ToString("d MMMM, dddd")]
-                    </div>
-                }
+                    var journey = Model.Journeys[index];
 
-                <div class="journey-card mb-2">
-                    @* Birinci satır: kalkış ve varış saatleri solda, fiyat sağda. *@
-                    <div class="d-flex align-items-start justify-content-between gap-2">
-                        <div class="d-flex align-items-center gap-2">
-                            <div>
-                                <div class="journey-time-label">@L["Journey_Departure"]</div>
-                                <div class="journey-time">@journey.Departure.ToString("HH:mm")</div>
+                    @if (nextDayIndex == index)
+                    {
+                        @*
+                            Ayırıcı yalnızca kronolojik sırada anlam taşıyor;
+                            fiyata veya süreye göre sıralandığında istemci
+                            tarafı onu gizliyor.
+                        *@
+                        <div class="next-day-divider" data-next-day-divider>
+                            @L["Journey_NextDayFormat", journey.Departure.ToString("d MMMM, dddd")]
+                        </div>
+                    }
+
+                    // Süre biçimlendirmesi ayrı bir yerde: gün bileşenini
+                    // düşüren h:mm biçimi 25 saatlik bir seferi 1:30
+                    // olarak gösteriyordu.
+                    var duration = DurationFormatter.Format(journey.Duration);
+
+                    // Sıralama anahtarları kültürden bağımsız biçimde
+                    // yazılıyor: istemci bunları sayı olarak okuyor ve
+                    // Türkçe kültürde ondalık ayırıcı virgül olurdu.
+                    var sortPrice = journey.InternetPrice.ToString(CultureInfo.InvariantCulture);
+                    var sortDuration = journey.Duration is null
+                        ? string.Empty
+                        : ((long)journey.Duration.Value.TotalMinutes).ToString(CultureInfo.InvariantCulture);
+
+                    <article class="journey-card" data-journey
+                             data-departure="@journey.Departure.ToString("s", CultureInfo.InvariantCulture)"
+                             data-price="@sortPrice"
+                             data-duration="@sortDuration">
+
+                        @* Saatler, süre ve terminaller tek kolonda. *@
+                        <div class="journey-trip">
+                            <div class="journey-times">
+                                <div>
+                                    <div class="journey-time-label">@L["Journey_Departure"]</div>
+                                    <div class="journey-time">@journey.Departure.ToString("HH:mm")</div>
+                                </div>
+
+                                <span class="journey-arrow">
+                                    <svg class="icon" aria-hidden="true"><use href="#icon-arrow-right" /></svg>
+                                </span>
+
+                                <div>
+                                    <div class="journey-time-label">@L["Journey_Arrival"]</div>
+                                    <div class="journey-time">@journey.Arrival.ToString("HH:mm")</div>
+                                </div>
+
+                                @if (duration is not null)
+                                {
+                                    <div class="journey-duration">
+                                        <div class="journey-time-label">@L["Journey_Duration"]</div>
+                                        <div class="journey-duration-value">@duration</div>
+                                    </div>
+                                }
                             </div>
 
-                            <span class="journey-arrow">&rarr;</span>
-
-                            <div>
-                                <div class="journey-time-label">@L["Journey_Arrival"]</div>
-                                <div class="journey-time">@journey.Arrival.ToString("HH:mm")</div>
+                            <div class="journey-stations">
+                                <span class="journey-station">
+                                    <svg class="icon" aria-hidden="true"><use href="#icon-pin" /></svg>
+                                    <span title="@journey.OriginStation">@journey.OriginStation</span>
+                                </span>
+                                <span>&ndash;</span>
+                                <span class="journey-station">
+                                    <svg class="icon" aria-hidden="true"><use href="#icon-pin" /></svg>
+                                    <span title="@journey.DestinationStation">@journey.DestinationStation</span>
+                                </span>
                             </div>
+                        </div>
+
+                        @*
+                            Olanaklar: varsa tanıtım etiketi üstte, ikonlar altta.
+
+                            Kolon, olanak olmayan seferlerde de boş olarak
+                            duruyor: ızgara izi kaybolsa kartların kolonları
+                            listede birbirinden kayardı. Ama `role` ve etiket
+                            yalnızca içerik varken veriliyor — boş bir grubu
+                            "Olanaklar" diye duyurmak ekran okuyucu için
+                            gürültüden başka bir şey değil.
+                        *@
+                        <div class="journey-features"
+                             role="@(journey.Features.Count > 0 ? "group" : null)"
+                             aria-label="@(journey.Features.Count > 0 ? L["Journey_Features"].Value : null)">
+                            @foreach (var feature in journey.Features.Where(f => f.IsPromoted))
+                            {
+                                @*
+                                    Tanıtımlı olanaklar metin etiketi olarak:
+                                    taşıdıkları bilgi çoğunlukla bir indirim
+                                    tutarı ve bir sembole sığmaz. Renkler
+                                    API'den geldiği için yazılmadan önce
+                                    doğrulanır; bkz. CssColor.
+                                *@
+                                var background = CssColor.Sanitize(feature.BackgroundColor);
+                                var foreground = CssColor.Sanitize(feature.ForegroundColor);
+                                var style = string.Concat(
+                                    background is null ? string.Empty : $"background-color:{background};",
+                                    foreground is null ? string.Empty : $"color:{foreground};");
+
+                                <span class="journey-feature-badge" style="@style"
+                                      title="@feature.Name">@feature.Name</span>
+                            }
 
                             @{
-                                // Süre biçimlendirmesi ayrı bir yerde: gün bileşenini
-                                // düşüren h:mm biçimi 25 saatlik bir seferi 1:30
-                                // olarak gösteriyordu.
-                                var duration = DurationFormatter.Format(journey.Duration);
+                                var iconFeatures = journey.Features.Where(f => !f.IsPromoted).ToList();
                             }
-                            @if (duration is not null)
+                            @if (iconFeatures.Count > 0 || journey.HiddenFeatureCount > 0)
                             {
-                                <div class="ms-2">
-                                    <div class="journey-time-label">@L["Journey_Duration"]</div>
-                                    <div class="journey-route">@duration</div>
+                                <div class="journey-feature-icons">
+                                    @foreach (var feature in iconFeatures)
+                                    {
+                                        @*
+                                            İkon her kimlik için mevcut değil ve olmayan
+                                            kimlik 403 döndürüyor; yüklenemeyen ikon
+                                            gizlenir, adı erişilebilir hâlde kalır.
+                                        *@
+                                        <img class="journey-feature-icon" data-feature-icon
+                                             src="@FeatureIcon.UrlFor(feature.Id)"
+                                             alt="@feature.Name" title="@feature.Name"
+                                             width="18" height="18" loading="lazy" />
+                                    }
+
+                                    @if (journey.HiddenFeatureCount > 0)
+                                    {
+                                        <span class="journey-feature-more"
+                                              title="@L["Journey_MoreFeaturesTitleFormat", journey.HiddenFeatureCount]">
+                                            @L["Journey_MoreFeaturesFormat", journey.HiddenFeatureCount]
+                                        </span>
+                                    }
                                 </div>
                             }
                         </div>
 
-                        <div class="text-end">
+                        <div class="journey-partner">
+                            <span class="journey-partner-name">@journey.PartnerName</span>
+                            @*
+                                Logo bir CDN üzerinde ve her firma için mevcut
+                                olduğu garanti değil; yüklenemezse gizlenir ve
+                                firma adı yazıyla kalır.
+                            *@
+                            <img class="journey-partner-logo" data-partner-logo
+                                 src="@PartnerLogo.UrlFor(journey.PartnerId)"
+                                 alt="@journey.PartnerName" loading="lazy" />
+                        </div>
+
+                        <div class="journey-price">
                             @*
                                 Sayı biçimi kültürden, para birimi API'nin bildirdiği
                                 koddan gelir. ToString("C2") kullanılmaz: İngilizce
@@ -112,105 +320,54 @@
                             @if (journey.HasDiscount)
                             {
                                 @* Yalnızca gerçek indirim varsa çizili fiyat gösterilir. *@
-                                <div class="price-original mt-1">
+                                <div class="price-original">
                                     @MoneyFormatter.Format(journey.OriginalPrice, journey.Currency)
                                 </div>
                             }
                         </div>
-                    </div>
-
-                    @*
-                        İkinci satır: terminal güzergâhı ve firma. Dar ekranda
-                        güzergâh kendi satırını alır; bkz. .journey-meta.
-                    *@
-                    <div class="journey-meta mt-2">
-                        <div class="journey-route">
-                            @journey.OriginStation &ndash; @journey.DestinationStation
-                        </div>
 
                         @*
-                            Olanaklar güzergâhın yanında yan yana. Öğe sayısı
-                            sunucu tarafında sınırlandığı için satır yüksekliği
-                            sabit kalır.
+                            Seçim düğmesi tasarımda var ama koltuk seçimi ve
+                            satın alma bu uygulamanın kapsamı dışında. Görsel
+                            olarak tasarımdaki hâliyle duruyor; devre dışı
+                            olduğu hem `disabled` ile hem açıklamayla belli.
+                            Çalışıyormuş gibi görünen bir düğme koymak
+                            kullanıcıya yanlış bilgi verirdi.
                         *@
-                        @if (journey.Features.Count > 0)
-                        {
-                            <div class="journey-features" role="group"
-                                 aria-label="@L["Journey_Features"]">
-                                @foreach (var feature in journey.Features)
-                                {
-                                    @if (feature.IsPromoted)
-                                    {
-                                        @*
-                                            Tanıtımlı olanaklar metin etiketi olarak:
-                                            taşıdıkları bilgi çoğunlukla bir indirim
-                                            tutarı ve bir sembole sığmaz. Renkler
-                                            API'den geldiği için yazılmadan önce
-                                            doğrulanır; bkz. CssColor.
-                                        *@
-                                        var background = CssColor.Sanitize(feature.BackgroundColor);
-                                        var foreground = CssColor.Sanitize(feature.ForegroundColor);
-                                        var style = string.Concat(
-                                            background is null ? string.Empty : $"background-color:{background};",
-                                            foreground is null ? string.Empty : $"color:{foreground};");
-
-                                        <span class="journey-feature-badge" style="@style"
-                                              title="@feature.Name">@feature.Name</span>
-                                    }
-                                    else
-                                    {
-                                        @*
-                                            İkon her kimlik için mevcut değil ve olmayan
-                                            kimlik 403 döndürüyor; yüklenemeyen ikon
-                                            gizlenir, adı erişilebilir hâlde kalır.
-                                        *@
-                                        <img class="journey-feature-icon" data-feature-icon
-                                             src="@FeatureIcon.UrlFor(feature.Id)"
-                                             alt="@feature.Name" title="@feature.Name"
-                                             width="16" height="16" loading="lazy" />
-                                    }
-                                }
-
-                                @if (journey.HiddenFeatureCount > 0)
-                                {
-                                    <span class="journey-feature-more"
-                                          title="@L["Journey_MoreFeaturesTitleFormat", journey.HiddenFeatureCount]">
-                                        @L["Journey_MoreFeaturesFormat", journey.HiddenFeatureCount]
-                                    </span>
-                                }
-                            </div>
-                        }
-
-                        <div class="d-flex align-items-center gap-2 flex-shrink-0 ms-auto">
-                            <span class="journey-partner text-end">@journey.PartnerName</span>
-                            @*
-                                Logo bir CDN üzerinde ve her firma için mevcut
-                                olduğu garanti değil; yüklenemezse gizlenir ve
-                                firma adı yazıyla kalır.
-                            *@
-                            <img class="journey-partner-logo" data-partner-logo
-                                 src="@PartnerLogo.UrlFor(journey.PartnerId)"
-                                 alt="@journey.PartnerName" loading="lazy" />
-                        </div>
-                    </div>
-                </div>
-            }
+                        <button type="button" class="journey-select" disabled
+                                title="@L["Journey_SelectUnavailable"]">
+                            @L["Journey_Select"]
+                            <svg class="icon" aria-hidden="true"><use href="#icon-chevron-right" /></svg>
+                        </button>
+                    </article>
+                }
+            </div>
         }
     </div>
 </div>
 
 @section Scripts {
+    <script src="~/js/journey-list.js" asp-append-version="true"></script>
     <script>
-        // Yüklenemeyen firma logolarını ve olanak ikonlarını gizler. Inline
-        // onerror yerine burada bağlanıyor; işaretleme temiz kalsın.
-        //
-        // Olmayan bir olanak ikonu 404 değil 403 döndürüyor, bu yüzden
-        // durum koduna bakılamaz; tarayıcının hata olayı tek güvenilir yol.
-        const images = document.querySelectorAll('[data-partner-logo], [data-feature-icon]');
-        for (const image of images) {
-            image.addEventListener('error', function () {
-                image.style.display = 'none';
-            });
-        }
+        (function () {
+            // Yüklenemeyen firma logolarını ve olanak ikonlarını gizler. Inline
+            // onerror yerine burada bağlanıyor; işaretleme temiz kalsın.
+            //
+            // Olmayan bir olanak ikonu 404 değil 403 döndürüyor, bu yüzden
+            // durum koduna bakılamaz; tarayıcının hata olayı tek güvenilir yol.
+            const images = document.querySelectorAll('[data-partner-logo], [data-feature-icon]');
+            for (const image of images) {
+                image.addEventListener('error', function () {
+                    image.style.display = 'none';
+                });
+            }
+
+            const helpers = window.ObiletJourneyList;
+            const list = document.getElementById('journey-list');
+            const sort = document.getElementById('journey-sort');
+            if (helpers && list && sort) {
+                helpers.attachSorting(list, sort);
+            }
+        })();
     </script>
 }

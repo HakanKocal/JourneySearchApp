@@ -55,7 +55,7 @@ public sealed class SharedResourceParityTests
 
         // Boş bir kaynak kümesi, diğer testlerin sessizce geçmesine yol açardı.
         Assert.NotEmpty(entries);
-        Assert.Equal("Bileti Bul", entries["Search_Submit"]);
+        Assert.Equal("Seferleri Sorgula", entries["Search_Submit"]);
     }
 
     [Fact]

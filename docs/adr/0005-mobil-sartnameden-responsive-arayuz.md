@@ -17,3 +17,9 @@ Bu ADR, arayüzün neden mobil oranlara yakın durduğunu ileride merak edecek o
 Bu belgenin bir sonucu artık geçerli değil. Yazıldığı sırada, şartname sefer satırında olanak göstermediği için olanak ikonlarının da gösterilmemesi kaydedilmişti. `docs/adr/0006` bu sonucu geçersiz kılıyor: tanıtımlı olanakların indirim kodu olduğu görülünce, tasarıma sadakat fiyatı etkileyen bir bilgiyi saklamaya değmedi.
 
 Belgenin mobil-öncelikli responsive kararı geçerliliğini koruyor.
+
+## İkinci güncelleme
+
+Bu belgenin **dayanağı** artık geçerli değil. Yazıldığı sırada elde masaüstü tasarımı yoktu ve görsel dil o yüzden mobil şartnameden türetilmişti. Sonradan iki masaüstü tasarımı verildi; `docs/adr/0007` arayüzün onlara göre yenilendiğini kaydediyor.
+
+Yalnızca **mobil-öncelikli kurulum** kararı bu belgeden devam ediyor: taban stiller hâlâ dar ekranı tarif ediyor ve medya sorguları genişlikte masaüstü düzenine açılıyor. Palet, ölçüler ve bileşen yerleşimi artık 0007'nin konusu.

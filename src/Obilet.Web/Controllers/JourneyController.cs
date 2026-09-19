@@ -88,7 +88,8 @@ public sealed class JourneyController : Controller
             DestinationId: destinationId,
             DepartureDate: departureDate,
             OriginName: NameOf(locations, originId),
-            DestinationName: NameOf(locations, destinationId)));
+            DestinationName: NameOf(locations, destinationId),
+            Today: Today()));
     }
 
     /// <remarks>

@@ -1,356 +1,1198 @@
 /*
  * obilet.com sefer arama — görsel dil.
  *
- * Renkler ve ölçüler, ödevle verilen Adobe XD tasarım şartnamesinden
- * alınmıştır. Şartname 320x568 boyutunda bir mobil tasarımdır ve masaüstü
- * karşılığı yoktur; bu yüzden arayüz mobil-öncelikli kurulup masaüstünde
- * yatay düzene genişler. Gerekçe için bkz. docs/adr/0005.
+ * Palet ve yerleşim, ödevin sonraki aşamasında verilen iki masaüstü
+ * tasarımından alınmıştır: fotoğraf zeminli bir hero ve onun üzerine binen
+ * arama kartı taşıyan ana sayfa, ile aynı hero'nun kısa hâlini ve yatay
+ * sefer kartlarını taşıyan liste sayfası. Bu tasarım, ödevle birlikte gelen
+ * mobil Adobe XD şartnamesinin yerini alır; gerekçe için bkz. docs/adr/0007.
  *
- * Şartname birebir uygulanmıyor — gereksinim de bunu istemiyor — ancak
- * düzen, palet ve bileşen yerleşimi tanınabilir olmalı.
+ * Kurulum masaüstü-öncelikli değil, hâlâ mobil-öncelikli: taban stiller dar
+ * ekranı tarif eder ve medya sorguları genişlikte yatay düzene açar. Sebebi,
+ * verilen tasarımların masaüstü olması ama trafiğin mobil olması; ayrıca
+ * önceki şartname 320px genişlikte çalışıyordu ve o zemin korunuyor.
  */
 
 :root {
-    /* Birincil marka mavisi: başlık çubukları, alan etiketleri, ana buton. */
-    --obilet-blue: #2F4EB4;
-    --obilet-blue-dark: #27409A;
+    /* Birincil marka mavisi: butonlar, başlıklar, alan etiketleri. */
+    --obilet-blue: #2346B8;
+    --obilet-blue-dark: #1A3691;
 
-    /* Fiyat etiketi kırmızısı. Canlı sitenin theme-color değeri de bu. */
-    --obilet-red: #D23B38;
+    /* Hero gradyanının açık ucu; fotoğrafın üzerine binen mavi. */
+    --obilet-blue-bright: #2C5AD4;
+
+    /* Mavi zeminler: ikon madalyonu ve olanak şeridi. */
+    --obilet-blue-tint: #DCEAFB;
+    --obilet-blue-pale: #EFF5FD;
+
+    /* Hero başlığının ikinci satırı; beyazdan bir adım geri. */
+    --obilet-sky: #AECBF2;
+
+    /* Fiyat etiketi kırmızısı ve indirim etiketi yeşili. */
+    --obilet-red: #E8433D;
+    --obilet-green: #16A05C;
+    --obilet-green-tint: #E6F7EE;
 
     /* Sefer saatleri ve mikro etiketler. */
-    --obilet-navy: #192289;
-    --obilet-label-blue: #3640B1;
+    --obilet-navy: #12307A;
+    --obilet-label-blue: #3B7BD4;
 
-    /* Metin ve ikon grileri. */
-    --obilet-slate: #5D686E;
-    --obilet-dark-slate: #083145;
-    --obilet-icon-gray: #9D9D9C;
+    /* Metin grileri. */
+    --obilet-slate: #5D7387;
+    --obilet-dark-slate: #12324A;
 
     /* Zeminler ve kenarlıklar. */
-    --obilet-panel-bg: #F8F8F8;
-    --obilet-list-bg: #F3F3F3;
-    --obilet-card-edge: #EDEDED;
-    --obilet-card-border: #B4B4B4;
+    --obilet-page-bg: #F6F9FC;
+    --obilet-field-bg: #FFFFFF;
+    --obilet-card-border: #E6EDF5;
 
-    --obilet-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.10);
-    --obilet-header-shadow: 0 2px 4px rgba(0, 0, 0, 0.16);
+    --obilet-card-shadow: 0 1px 2px rgba(18, 50, 74, 0.05), 0 2px 8px rgba(18, 50, 74, 0.05);
+    --obilet-card-shadow-lg: 0 8px 28px rgba(18, 50, 74, 0.12);
+
+    --obilet-radius: 12px;
+    --obilet-radius-sm: 10px;
 }
 
 body {
     background-color: #FFFFFF;
     color: var(--obilet-slate);
+    font-size: 0.9375rem;
 }
 
 /* Yatay kaydırma 320px genişlikte de oluşmamalı. */
-html, body {
+html,
+body {
     overflow-x: hidden;
 }
 
-/* --- Üst çubuk ------------------------------------------------------------ */
-/* Şartnamedeki üst çubuk boş: logo, menü veya metin taşımıyor. */
-.obilet-topbar {
-    background-color: var(--obilet-blue);
-    height: 40px;
-}
-
-/* --- Arama paneli -------------------------------------------------------- */
-.search-panel {
-    background-color: var(--obilet-panel-bg);
-    padding: 1.5rem 1rem 2rem;
-}
-
-.field-card {
-    background-color: #FFFFFF;
-    box-shadow: var(--obilet-card-shadow);
-    padding: 0.625rem 1rem;
-    border-radius: 2px;
-}
-
-.field-label {
-    color: var(--obilet-blue);
-    font-weight: 500;
-    font-size: 0.875rem;
-    margin-bottom: 0.125rem;
-}
-
-/* --- Kalkış / varış alanları ve takas butonu ----------------------------- */
+/* --- İkonlar ------------------------------------------------------------- */
 /*
- * Şartnamede iki kart 3px aralıkla üst üste duruyor ve dairesel takas butonu
- * aralarındaki dikişte, sağa yakın konumlanıyor. Mobilde bu yerleşim birebir
- * korunuyor; masaüstünde alanlar yan yana gelince buton aralarına geçiyor.
+ * Semboller _IconSprite.cshtml içinde tanımlı ve layout içinde bir kez
+ * çiziliyor. Sprite'ın kendisi görünmez; yalnızca `use` ile çağrılır.
  */
-.location-fields {
+.icon-sprite {
+    display: none;
+}
+
+.icon {
+    width: 1em;
+    height: 1em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+
+    /* Metnin yanında satıra oturması için; varsayılan baseline hizası
+       ikonu yazının bir miktar üstünde bırakıyor. */
+    vertical-align: -0.125em;
+    flex: 0 0 auto;
+}
+
+/* --- Hero ---------------------------------------------------------------- */
+/*
+ * Üç katman: fotoğraf, mavi gradyan perde, içerik. Perde ayrı bir katman
+ * olarak duruyor çünkü fotoğraf `background-position` ile kaydırılıyor ve
+ * gradyanı aynı özelliğe bindirmek ikisini birbirine bağımlı kılardı.
+ */
+.hero {
     position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
+    isolation: isolate;
+    overflow: hidden;
+    color: #FFFFFF;
+    background-color: var(--obilet-blue-dark);
 }
 
-.swap-button {
-    width: 28px;
-    height: 28px;
-    padding: 0;
-    border-radius: 50%;
-    background-color: #FFFFFF;
-    border: 1px solid var(--obilet-icon-gray);
-    color: var(--obilet-slate);
-    line-height: 1;
-    font-size: 0.875rem;
-
-    /* Mobilde iki kartın dikişinde, sağa yakın. */
+.hero-media,
+.hero-veil {
     position: absolute;
-    right: 16px;
-    top: calc(50% - 14px);
-    z-index: 3;
-    box-shadow: var(--obilet-card-shadow);
+    inset: 0;
+    z-index: -1;
 }
 
-.swap-button:hover,
-.swap-button:focus {
-    background-color: var(--obilet-panel-bg);
+.hero-media {
+    background-image: url("../img/hero-bus.jpg");
+    background-size: cover;
+
+    /*
+     * Dar ekranda otobüs sağ kenardan kaybolmasın: odak noktası sağa yakın
+     * tutuluyor. Fotoğrafın solu deniz ve boş yol, yani kırpılabilir kısım.
+     */
+    background-position: 72% center;
+    background-repeat: no-repeat;
+}
+
+/*
+ * Dar ekranda perde neredeyse opak. Verilen tasarım masaüstü ve metni
+ * fotoğrafın yanına koyarak okunur kılıyor; 390px genişlikte metnin yanında
+ * yer yok, yani metin fotoğrafın üzerine düşüyor. Tarayıcıda ölçüldüğünde
+ * alt metin dağların üzerinde okunamıyordu. Fotoğraf yine görünüyor, ama
+ * bir doku olarak.
+ *
+ * Geniş ekrandaki soldan sağa açılan perde aşağıda, medya sorgusunun içinde.
+ */
+.hero-veil {
+    background: linear-gradient(
+        160deg,
+        rgba(24, 52, 142, 0.95) 0%,
+        rgba(33, 66, 178, 0.89) 55%,
+        rgba(40, 82, 200, 0.8) 100%);
+}
+
+.hero-inner {
+    position: relative;
+    padding-top: 1.5rem;
+    padding-bottom: 2.5rem;
+}
+
+/* Fotoğrafın görünür kalması için içerik dar ekranda da sola yığılır. */
+.hero-content {
+    max-width: 34rem;
+}
+
+/* Üst satır: marka işareti solda, dil değiştirici sağda. */
+.hero-topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+}
+
+.hero-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.9375rem;
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.hero-brand .icon {
+    width: 1.75rem;
+    height: 1.75rem;
+    stroke-width: 1.5;
+}
+
+/* Tasarımdaki dikey ayırıcı çizgi. */
+.hero-brand-rule {
+    width: 1px;
+    height: 1.25rem;
+    background-color: rgba(255, 255, 255, 0.45);
+}
+
+.hero-title {
+    font-weight: 800;
+    font-size: clamp(1.875rem, 6.5vw, 3.25rem);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.875rem;
+    text-shadow: 0 1px 12px rgba(12, 34, 84, 0.25);
+}
+
+.hero-title span {
+    display: block;
+}
+
+/* Tasarımda ikinci satır bir ton açık mavi. */
+.hero-title-soft {
+    color: var(--obilet-sky);
+}
+
+.hero-lead {
+    max-width: 26rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.88);
+    margin-bottom: 1.75rem;
+}
+
+/*
+ * Hero'nun alt kenarındaki beyaz kıvrım. SVG olarak çiziliyor çünkü
+ * `border-radius` ile kurulan karşılığı ekran genişliğine göre eğimini
+ * değiştiriyor; `preserveAspectRatio="none"` ile SVG her genişlikte aynı
+ * oranda geriliyor.
+ */
+.hero-curve {
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    width: 100%;
+    height: 2.25rem;
+    color: var(--obilet-page-bg);
+}
+
+/* Liste sayfasındaki hero daha kısa: içerik arama kartı taşımıyor. */
+.hero--list .hero-inner {
+    padding-bottom: 3.75rem;
+}
+
+.hero--list .hero-title {
+    font-size: clamp(1.75rem, 5.5vw, 2.75rem);
+    margin-bottom: 0.5rem;
+}
+
+/*
+ * Liste sayfasının alt metni tek satırda kalmalı: hero kısa ve ikinci satır
+ * kıvrımın üstüne biniyordu.
+ */
+.hero--list .hero-lead {
+    max-width: 36rem;
+    margin-bottom: 0;
+}
+
+/* --- Hero üzerindeki dil değiştirici ------------------------------------ */
+/*
+ * Dil değiştirici hero'nun sağ üst köşesine taşındı. Önceki tasarımda
+ * sayfanın altındaydı; yeni tasarımda hero üst satırının sağ tarafı boş ve
+ * bir dil seçiminin bulunması beklenen yer orası.
+ *
+ * Kendi zemini var. Sebebi ölçülen bir okunabilirlik kusuru: mavi perde
+ * ekranın sağına ulaşmıyor, dolayısıyla değiştirici fotoğrafın en parlak
+ * kısmının — gökyüzü ve beyaz otobüs — üzerine düşüyor ve beyaz metin
+ * kayboluyordu.
+ */
+.hero-lang {
+    display: inline-flex;
+    padding: 0.3125rem 0.75rem;
+    border-radius: 999px;
+    background-color: rgba(18, 48, 122, 0.42);
+    backdrop-filter: blur(4px);
+}
+
+.hero-lang .btn-link {
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.875rem;
+}
+
+.hero-lang .btn-link:disabled,
+.hero-lang .btn-link[aria-current="true"] {
+    color: #FFFFFF;
+    opacity: 1;
+}
+
+.hero-lang .culture-label {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.8125rem;
+}
+
+/* Hero dışında kullanıldığında (hata sayfaları) okunur kalmalı. */
+.culture-label {
+    color: var(--obilet-slate);
+    font-size: 0.8125rem;
+}
+
+/* --- Geri dönüş düğmesi -------------------------------------------------- */
+.pill-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4375rem 1rem 0.4375rem 0.75rem;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    color: #FFFFFF;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+
+    /* Tarayıcının arkasındaki fotoğraf üzerinde cam etkisi. */
+    backdrop-filter: blur(4px);
+}
+
+.pill-back:hover,
+.pill-back:focus-visible {
+    background-color: rgba(255, 255, 255, 0.28);
+    color: #FFFFFF;
+}
+
+/* --- Arama kartı --------------------------------------------------------- */
+/*
+ * Hero'nun üzerine binen beyaz kart. Tasarımda hero'nun alt kenarını
+ * aşıyor; burada hero'nun içinde duruyor ve kıvrımın üstünde kalıyor.
+ */
+.search-card {
+    background-color: #FFFFFF;
+    border-radius: var(--obilet-radius);
+    box-shadow: var(--obilet-card-shadow-lg);
+    padding: 1rem;
+}
+
+/* Tarih çipleri kartın üstünde, sola dayalı. */
+.date-chips {
+    display: flex;
+    gap: 0.625rem;
+    margin-bottom: 0.875rem;
+}
+
+.date-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4375rem;
+    min-width: 6.5rem;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    border: 1px solid var(--obilet-card-border);
+    background-color: #FFFFFF;
     color: var(--obilet-blue);
+    font-size: 0.875rem;
+    font-weight: 500;
+
+    /*
+     * Çipler iki sayfada farklı öğeler: arama formunda `button`, sefer
+     * listesinde aynı güzergâhın başka gününe giden `a`. Altı çizili
+     * görünmemeleri için bağlantı süslemesi kapatılıyor.
+     */
+    text-decoration: none;
+}
+
+.date-chip:hover {
     border-color: var(--obilet-blue);
 }
 
-/* --- Tarih alanı ve hızlı seçim çipleri ---------------------------------- */
-.date-chip {
-    min-width: 56px;
-    font-size: 0.8125rem;
-    border-radius: 2px;
-    border: 1px solid var(--obilet-card-border);
-    background-color: #FFFFFF;
-    color: var(--obilet-dark-slate);
-    padding: 0.25rem 0.5rem;
+/* Seçili çip dolu mavi; tasarımdaki karşılığı bu. */
+.date-chip.is-active {
+    background-color: var(--obilet-blue);
+    border-color: var(--obilet-blue);
+    color: #FFFFFF;
 }
 
-/* Şartnamedeki seçili çip dolu gri; seçili olmayan beyaz ve çerçeveli. */
-.date-chip.is-active {
-    background-color: var(--obilet-slate);
-    border-color: var(--obilet-slate);
+/* --- Form alanları ------------------------------------------------------- */
+/*
+ * Alanlar dar ekranda dikey yığılı, geniş ekranda yan yana. Takas butonu
+ * dar ekranda kalkış ve varış kartlarının dikişinde, geniş ekranda
+ * aralarında bir ızgara hücresinde duruyor.
+ */
+.search-fields {
+    position: relative;
+    display: grid;
+    gap: 0.625rem;
+    margin-bottom: 0.875rem;
+}
+
+.field-card {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-width: 0;
+    padding: 0.5rem 0.875rem;
+    border: 1px solid var(--obilet-card-border);
+    border-radius: var(--obilet-radius-sm);
+    background-color: var(--obilet-field-bg);
+}
+
+.field-card:focus-within {
+    border-color: var(--obilet-blue);
+    box-shadow: 0 0 0 3px rgba(35, 70, 184, 0.12);
+}
+
+.field-card > .icon {
+    width: 1.125rem;
+    height: 1.125rem;
+    color: var(--obilet-blue);
+}
+
+.field-body {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.field-label {
+    display: block;
+    color: var(--obilet-slate);
+    font-size: 0.75rem;
+    line-height: 1.2;
+    margin-bottom: 0.0625rem;
+}
+
+/* Alan içindeki asıl değer: tarih girdisi ve Tom Select aynı ölçüyü paylaşır. */
+.field-value {
+    display: block;
+    width: 100%;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: var(--obilet-dark-slate);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    line-height: 1.3;
+}
+
+.field-value:focus {
+    outline: none;
+}
+
+/*
+ * Takas butonu dar ekranda kalkış ve varış kartlarının dikişinde, sağa
+ * yakın duruyor.
+ *
+ * Konum negatif dikey boşlukla kuruluyor, absolute ile değil. Sebebi
+ * tarayıcıda görülen bir hata: `top: calc(50% - 1rem)` ile konumlandığında
+ * buton üç alanın ortasına, yani varış ve tarih kartlarının arasına
+ * düşüyordu — çünkü ızgarada artık üç alan var. Negatif boşluk butonun
+ * kendi yüksekliğini iptal ediyor, böylece kendi ızgara satırı sıfıra
+ * çöküyor ve buton alan yüksekliklerinden bağımsız olarak tam dikişte
+ * kalıyor.
+ */
+.swap-button {
+    justify-self: end;
+    margin: -1rem 1rem -1rem 0;
+    position: relative;
+    z-index: 3;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid var(--obilet-card-border);
+    background-color: #FFFFFF;
+    color: var(--obilet-blue);
+    box-shadow: var(--obilet-card-shadow);
+}
+
+.swap-button .icon {
+    width: 1rem;
+    height: 1rem;
+}
+
+.swap-button:hover,
+.swap-button:focus-visible {
+    background-color: var(--obilet-blue);
+    border-color: var(--obilet-blue);
     color: #FFFFFF;
 }
 
 /* --- Ana buton ----------------------------------------------------------- */
-/* Şartnamede buton tam genişlik değil, ortalanmış ve daha dar. */
 .btn-obilet {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    border: 0;
+    border-radius: var(--obilet-radius-sm);
     background-color: var(--obilet-blue);
-    border-color: var(--obilet-blue);
     color: #FFFFFF;
-    font-weight: 500;
-    font-size: 1.0625rem;
-    padding: 0.5rem 2rem;
-    border-radius: 2px;
-    min-width: 208px;
+    font-size: 1rem;
+    font-weight: 600;
+
+    /* Boş durum kartında bir `a` olarak kullanılıyor; altı çizilmesin. */
+    text-decoration: none;
 }
 
 .btn-obilet:hover,
-.btn-obilet:focus {
+.btn-obilet:focus-visible {
     background-color: var(--obilet-blue-dark);
-    border-color: var(--obilet-blue-dark);
-    color: #FFFFFF;
-}
-
-/* --- Sefer listesi ------------------------------------------------------- */
-.journey-page {
-    background-color: var(--obilet-list-bg);
-    min-height: 100vh;
-}
-
-.journey-header {
-    background-color: var(--obilet-blue);
-    box-shadow: var(--obilet-header-shadow);
-    color: #FFFFFF;
-    padding: 0.875rem 1rem;
-}
-
-.journey-header a {
     color: #FFFFFF;
     text-decoration: none;
 }
 
-.journey-header-title {
-    font-size: 1.0625rem;
+/* Boş durum ve hata sayfalarında buton tam genişlik olmamalı. */
+.btn-obilet--auto {
+    width: auto;
+}
+
+/* --- Olanak şeridi ------------------------------------------------------- */
+/*
+ * Hero'nun altındaki dört maddelik şerit. Dar ekranda iki kolona, geniş
+ * ekranda dörde açılıyor; tek kolona düşürülmüyor çünkü maddeler kısa ve
+ * dikey olarak uzun bir liste oluşturuyordu.
+ */
+.value-strip {
+    background-color: var(--obilet-page-bg);
+    padding: 2rem 0 2.5rem;
+}
+
+.value-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.75rem 1rem;
+}
+
+.value-item {
+    text-align: center;
+}
+
+.value-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 0.75rem;
+    border-radius: 50%;
+    background-color: var(--obilet-blue-tint);
+    color: var(--obilet-blue);
+}
+
+.value-badge .icon {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.value-title {
+    color: var(--obilet-blue);
+    font-size: 0.9375rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.value-text {
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: var(--obilet-slate);
+    margin-bottom: 0;
+}
+
+/* --- Sefer listesi sayfası ---------------------------------------------- */
+.journey-page {
+    background-color: var(--obilet-page-bg);
+    min-height: 60vh;
+    padding-bottom: 2.5rem;
+}
+
+/*
+ * Sorgu özeti kartı. Tasarımda hero'nun alt kenarına biniyor; negatif üst
+ * boşluk o binmeyi kuruyor ve hero'nun kıvrımı kartın arkasında kalıyor.
+ */
+.summary-card {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.625rem;
+    margin-top: -1.75rem;
+    margin-bottom: 1.25rem;
+    padding: 0.875rem 1rem;
+    border-radius: var(--obilet-radius);
+    background-color: #FFFFFF;
+    box-shadow: var(--obilet-card-shadow-lg);
+}
+
+.summary-item {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-width: 0;
+    flex: 1 1 8rem;
+}
+
+.summary-item > .icon {
+    width: 1.125rem;
+    height: 1.125rem;
+    color: var(--obilet-blue);
+}
+
+.summary-value {
+    display: block;
+    color: var(--obilet-dark-slate);
+    font-size: 0.9375rem;
     font-weight: 600;
+    line-height: 1.3;
+
+    /* Uzun lokasyon adları kartı taşırmasın. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/*
+ * Kalkış ve varışı yer değiştiren bağlantı. Tasarımda iki alanın arasında
+ * bir ikon olarak duruyor; burada gerçek bir bağlantı, çünkü aynı sorgunun
+ * ters yönü tek tıkla ulaşılabilir olmalı.
+ */
+.summary-swap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    color: var(--obilet-blue);
+    text-decoration: none;
+}
+
+.summary-swap .icon {
+    width: 1.125rem;
+    height: 1.125rem;
+}
+
+.summary-swap:hover,
+.summary-swap:focus-visible {
+    background-color: var(--obilet-blue-pale);
+    color: var(--obilet-blue-dark);
+}
+
+/* Çipler özet kartının sağ ucunda, kendi zeminleri üzerinde. */
+.summary-chips {
+    display: flex;
+    gap: 0.375rem;
+    flex: 0 0 auto;
+    margin-left: auto;
+    padding: 0.25rem;
+    border-radius: 999px;
+    background-color: var(--obilet-page-bg);
+}
+
+.summary-chips .date-chip {
+    min-width: 5.25rem;
+    padding: 0.375rem 0.875rem;
+    border-color: transparent;
+    background-color: transparent;
+}
+
+.summary-chips .date-chip.is-active {
+    background-color: var(--obilet-blue);
+    border-color: var(--obilet-blue);
+}
+
+/* --- Liste araç çubuğu --------------------------------------------------- */
+.list-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.875rem;
+}
+
+.list-count {
+    color: var(--obilet-dark-slate);
+    font-size: 1.0625rem;
+    font-weight: 700;
+    margin-bottom: 0;
+}
+
+.sort-field {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4375rem 0.875rem;
+    border: 1px solid var(--obilet-card-border);
+    border-radius: var(--obilet-radius-sm);
+    background-color: #FFFFFF;
+    color: var(--obilet-blue);
+}
+
+.sort-field .icon {
+    width: 1rem;
+    height: 1rem;
+}
+
+.sort-field select {
+    border: 0;
+    background: transparent;
+    color: var(--obilet-dark-slate);
+    font-size: 0.875rem;
+    font-weight: 500;
+
+    /* Yerleşik ok gizlenip yerine sprite'taki ikon konuyor. */
+    appearance: none;
+    padding-right: 0.25rem;
+}
+
+.sort-field select:focus {
+    outline: none;
+}
+
+/* --- Sefer kartı --------------------------------------------------------- */
+/*
+ * Dar ekranda dört satır, geniş ekranda tek satır. Izgara alanları
+ * kullanılıyor çünkü iki düzen aynı işaretlemeyi paylaşıyor ve kartların
+ * kolonları listede hizalı görünmeli.
+ */
+.journey-card {
+    display: grid;
+    gap: 0.75rem 1rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+        "trip price"
+        "features features"
+        "partner select";
+    align-items: center;
+
+    margin-bottom: 0.625rem;
+    padding: 0.875rem 1rem;
+    border: 1px solid var(--obilet-card-border);
+    border-radius: var(--obilet-radius);
+    background-color: #FFFFFF;
+    box-shadow: var(--obilet-card-shadow);
+}
+
+.journey-card:hover {
+    border-color: #CFE0F4;
+    box-shadow: 0 2px 4px rgba(18, 50, 74, 0.06), 0 6px 16px rgba(18, 50, 74, 0.08);
+}
+
+.journey-trip {
+    grid-area: trip;
+    min-width: 0;
+}
+
+.journey-times {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+}
+
+/* KALKIŞ / VARIŞ / SÜRE mikro etiketleri. */
+.journey-time-label {
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--obilet-label-blue);
+    text-transform: uppercase;
     line-height: 1.2;
 }
 
-.journey-header-subtitle {
-    font-size: 0.9375rem;
-    opacity: 0.9;
-}
-
-/* Şartnamedeki kart: dikey gradyan, ince kenarlık, hafif gölge. */
-.journey-card {
-    background: linear-gradient(to bottom, var(--obilet-card-edge) 0%, #FFFFFF 48.8%, var(--obilet-card-edge) 100%);
-    border: 1px solid var(--obilet-card-border);
-    border-radius: 3px;
-    box-shadow: var(--obilet-card-shadow);
-    padding: 0.625rem 0.875rem;
-}
-
-/* KALKIŞ / VARIŞ mikro etiketleri: şartnamede 9px ve mavi. */
-.journey-time-label {
-    font-size: 0.5625rem;
-    letter-spacing: 0.02em;
-    color: var(--obilet-label-blue);
-    text-transform: uppercase;
-    line-height: 1;
-}
-
 .journey-time {
-    font-size: 0.9375rem;
-    font-weight: 600;
+    font-size: 1.125rem;
+    font-weight: 700;
     color: var(--obilet-navy);
     line-height: 1.2;
 }
 
 .journey-arrow {
     color: var(--obilet-navy);
-    font-size: 0.875rem;
+    align-self: flex-end;
+    margin-bottom: 0.25rem;
 }
 
-.journey-route {
-    font-size: 0.75rem;
+.journey-arrow .icon {
+    width: 1.125rem;
+    height: 1.125rem;
+}
+
+/* Süre kendi hücresinde ve solunda ince bir ayırıcı taşıyor. */
+.journey-duration {
+    padding-left: 0.625rem;
+    border-left: 1px solid var(--obilet-card-border);
+}
+
+.journey-duration-value {
+    font-size: 0.9375rem;
+    font-weight: 600;
     color: var(--obilet-dark-slate);
+    line-height: 1.2;
 }
 
-/*
- * Kartın ikinci satırı: güzergâh ve firma.
- *
- * Dar ekranda güzergâh kendi satırını alır. Aksi hâlde uzun bir firma adının
- * yanına sıkışıp dört satıra bölünüyor ve kart yükseklikleri listede
- * tutarsızlaşıyordu; 320px genişlikte gözle görülür bir kusur.
- */
-.journey-meta {
+/* Terminaller saatlerin altında, her biri bir konum ikonuyla. */
+.journey-stations {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    justify-content: space-between;
     gap: 0.25rem 0.5rem;
-}
-
-.journey-meta > .journey-route {
-    flex: 1 1 100%;
-}
-
-.journey-partner {
+    margin-top: 0.5rem;
     font-size: 0.8125rem;
     color: var(--obilet-slate);
 }
 
-.journey-partner-logo {
-    height: 20px;
-    width: auto;
-    max-width: 72px;
-    object-fit: contain;
+.journey-station {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+.journey-station .icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    color: var(--obilet-label-blue);
+}
+
+.journey-station span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* --- Olanaklar ----------------------------------------------------------- */
 /*
- * Olanaklar kartın ikinci satırında, güzergâh ve firmanın yanında yan yana
- * durur. Öğe sayısı sunucu tarafında sınırlandığı için satır yüksekliği
- * sabit kalır; kırpılan öğeler bir sayaçla belirtilir.
+ * Olanaklar kendi kolonunda: üstte varsa tanıtım etiketi, altında ikonlar.
+ * Öğe sayısı sunucu tarafında sınırlandığı için satır yüksekliği sabit
+ * kalır; kırpılan öğeler bir sayaçla belirtilir.
  */
 .journey-features {
+    grid-area: features;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4375rem;
+    min-width: 0;
+}
+
+.journey-feature-icons {
     display: flex;
     align-items: center;
-    gap: 0.375rem;
+    gap: 0.5rem;
     flex-wrap: wrap;
 }
 
 .journey-feature-icon {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     object-fit: contain;
-    opacity: 0.75;
+    opacity: 0.7;
 }
 
 /*
  * Tanıtımlı olanaklar ikon değil metin etiketi olarak çizilir: taşıdıkları
  * bilgi çoğunlukla bir indirim tutarı ve bu bir sembole sığmaz. Renkler
- * API'den gelir ve yazılmadan önce doğrulanır.
+ * API'den gelir ve yazılmadan önce doğrulanır; bkz. CssColor.
  */
 .journey-feature-badge {
-    font-size: 0.6875rem;
-    line-height: 1.4;
-    padding: 0.0625rem 0.375rem;
-    border-radius: 2px;
+    padding: 0.1875rem 0.5rem;
+    border-radius: 6px;
+    background-color: var(--obilet-green-tint);
+    color: var(--obilet-green);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.3;
     white-space: nowrap;
-    background-color: var(--obilet-card-edge);
-    color: var(--obilet-dark-slate);
 }
 
 .journey-feature-more {
-    font-size: 0.6875rem;
+    font-size: 0.75rem;
     color: var(--obilet-slate);
     white-space: nowrap;
 }
 
-/* Fiyat etiketi: şartnamede sağa dayalı, kırmızı dolgu, beyaz metin. */
+/* --- Firma, fiyat, seçim ------------------------------------------------- */
+.journey-partner {
+    grid-area: partner;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.journey-partner-name {
+    font-size: 0.8125rem;
+    color: var(--obilet-slate);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.journey-partner-logo {
+    height: 20px;
+    width: auto;
+    max-width: 5.5rem;
+    object-fit: contain;
+    flex: 0 0 auto;
+}
+
+.journey-price {
+    grid-area: price;
+    text-align: right;
+}
+
 .price-badge {
+    display: inline-block;
+    padding: 0.375rem 0.75rem;
+    border-radius: 8px;
     background-color: var(--obilet-red);
     color: #FFFFFF;
-    font-weight: 600;
-    font-size: 0.875rem;
-    padding: 0.25rem 0.625rem;
-    border-radius: 2px;
+    font-size: 0.9375rem;
+    font-weight: 700;
     white-space: nowrap;
 }
 
 .price-original {
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     color: var(--obilet-slate);
     text-decoration: line-through;
+    margin-top: 0.25rem;
 }
 
-/* Ertesi güne taşan seferleri ayıran başlık. */
-.next-day-divider {
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--obilet-dark-slate);
-    border-top: 1px solid var(--obilet-card-border);
-    padding-top: 0.75rem;
-    margin-top: 0.5rem;
-}
-
-/* --- Masaüstü ------------------------------------------------------------ */
 /*
- * Şartnamede masaüstü artboard'u yok. Canlı obilet.com sitesi aynı üç alanı
- * yatay dizdiği için genişlikte o düzene geçiliyor; yığılı kart ve dikişte
- * duran dairesel takas butonu motifi korunuyor.
+ * Seçim düğmesi tasarımda var ama işlevi bu ödevin kapsamı dışında: koltuk
+ * seçimi ve satın alma ekranı yok. Bu yüzden görsel olarak tasarımdaki
+ * hâliyle duruyor ama devre dışı — çalışıyormuş gibi görünen bir düğme
+ * kullanıcıya ve değerlendiriciye yanlış bilgi verirdi. Devre dışı olduğu
+ * `disabled` ile yardımcı teknolojilere de bildiriliyor.
  */
-/* Orta genişlikten itibaren güzergâh ve firma aynı satırı paylaşabilir. */
+.journey-select {
+    grid-area: select;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5rem 0.75rem 0.5rem 1rem;
+    border: 0;
+    border-radius: 8px;
+    background-color: var(--obilet-blue);
+    color: #FFFFFF;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.journey-select .icon {
+    width: 0.875rem;
+    height: 0.875rem;
+}
+
+.journey-select:disabled {
+    /* Tasarımdaki dolgu korunuyor; Bootstrap'in soluklaştırması iptal. */
+    opacity: 1;
+    cursor: not-allowed;
+}
+
+/* --- Ertesi güne taşan seferler ----------------------------------------- */
+.next-day-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 1.25rem 0 0.75rem;
+    color: var(--obilet-dark-slate);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.next-day-divider::after {
+    content: "";
+    flex: 1 1 auto;
+    height: 1px;
+    background-color: var(--obilet-card-border);
+}
+
+/*
+ * Ayırıcı yalnızca kronolojik sırada anlam taşıyor; başka bir sıralamada
+ * istemci onu `hidden` ile kapatıyor. Bu kural olmadan kapanmıyordu:
+ * tarayıcının `[hidden] { display: none }` kuralı bir öznitelik seçicisi ve
+ * yukarıdaki sınıf seçicisindeki `display: flex` onu yeniyor.
+ */
+.next-day-divider[hidden] {
+    display: none;
+}
+
+/* --- Boş durum ve uyarılar ---------------------------------------------- */
+.state-card {
+    padding: 2.5rem 1.5rem;
+    border: 1px solid var(--obilet-card-border);
+    border-radius: var(--obilet-radius);
+    background-color: #FFFFFF;
+    box-shadow: var(--obilet-card-shadow);
+    text-align: center;
+}
+
+.state-title {
+    color: var(--obilet-dark-slate);
+    font-size: 1.0625rem;
+    font-weight: 700;
+    margin-bottom: 0.375rem;
+}
+
+/* --- Alt bilgi ---------------------------------------------------------- */
+.obilet-footer {
+    padding: 1.25rem 0;
+    background-color: var(--obilet-page-bg);
+    border-top: 1px solid var(--obilet-card-border);
+    color: var(--obilet-slate);
+    font-size: 0.8125rem;
+    text-align: center;
+}
+
+/* --- Tom Select ---------------------------------------------------------- */
+/*
+ * Aranabilir lokasyon alanı. Kendi çerçevesi ve dolgusu kaldırılıyor;
+ * görünür çerçeveyi saran `.field-card` sağlıyor.
+ */
+.field-card .ts-wrapper {
+    margin: 0;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.field-card .ts-control {
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+    min-height: auto;
+    background: transparent;
+    color: var(--obilet-dark-slate);
+    font-size: 0.9375rem;
+    font-weight: 500;
+}
+
+.field-card .ts-control > .item {
+    /* Uzun lokasyon adı alanı taşırmasın. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.field-card .ts-control input {
+    font-size: 0.9375rem;
+}
+
+.field-card .ts-wrapper.single .ts-control {
+    /* Yerleşik ok gizli: alanın kendi chevron ikonu var. */
+    background-image: none;
+    padding-right: 0;
+}
+
+.field-card .ts-dropdown {
+    margin-top: 0.5rem;
+    border: 1px solid var(--obilet-card-border);
+    border-radius: var(--obilet-radius-sm);
+    box-shadow: var(--obilet-card-shadow-lg);
+    z-index: 10;
+}
+
+/* --- Orta genişlik ------------------------------------------------------- */
 @media (min-width: 576px) {
-    .journey-meta > .journey-route {
-        flex: 1 1 auto;
+    .hero-inner {
+        padding-top: 2rem;
+        padding-bottom: 3rem;
+    }
+
+    .search-card {
+        padding: 1.25rem;
+    }
+
+    .hero-curve {
+        height: 3rem;
     }
 }
 
+/* --- Geniş ekran: verilen tasarımların asıl düzeni ---------------------- */
 @media (min-width: 768px) {
-    .search-panel {
-        padding: 2rem 1.5rem 2.5rem;
-        border-radius: 4px;
+    .hero-inner {
+        padding-top: 2.5rem;
+        padding-bottom: 3.5rem;
     }
 
-    .location-fields {
-        flex-direction: row;
+    /* Fotoğrafın otobüsü sağda kalsın; içerik solda daralır. */
+    .hero-media {
+        background-position: center center;
+    }
+
+    /*
+     * Tasarımın asıl perdesi: soldan sağa açılıyor ve ekranın yaklaşık üç
+     * çeyreğinde tamamen saydam oluyor. Son durak bilinçli olarak
+     * %100'den önce: %100'de biten bir gradyan sağ kenara kadar ince bir
+     * mavi bırakıyordu ve fotoğrafın en parlak kısmı olan otobüs boyanmış
+     * görünüyordu.
+     *
+     * Metnin okunabilirliği burada perdeye değil yerleşime bağlı: başlık
+     * ve arama kartı solda, yani perdenin yoğun olduğu bölgede duruyor.
+     */
+    .hero-veil {
+        background: linear-gradient(
+            100deg,
+            rgba(24, 52, 142, 0.97) 0%,
+            rgba(33, 66, 178, 0.94) 30%,
+            rgba(40, 82, 200, 0.62) 48%,
+            rgba(44, 90, 212, 0.16) 63%,
+            rgba(44, 90, 212, 0) 74%);
+    }
+
+    .hero-content {
+        max-width: 42rem;
+    }
+
+    .hero-title {
+        margin-bottom: 1rem;
+    }
+
+    /*
+     * Arama kartı hero içinde, içerik genişliğinden bir miktar geniş.
+     * Ölçü tasarımdan alındı ve bir gerekliliği var: daha darında lokasyon
+     * adları alana sığmıyordu.
+     */
+    .search-card {
+        max-width: 48.5rem;
+        padding: 1.25rem 1.5rem 1.5rem;
+    }
+
+    /*
+     * Kalkış, takas, varış ve tarih tek satırda.
+     *
+     * Tarih kolonu diğerlerinden dar: içeriği sabit uzunlukta bir tarih,
+     * lokasyon alanlarının içeriği ise değişken uzunlukta bir ad. Eşit
+     * bölündüğünde en uzun varsayılan lokasyon adı ("İstanbul Anadolu",
+     * ölçülen genişlik 116px) 94px'lik bir alana sıkışıyor ve kullanıcı
+     * kendi seçimini okuyamıyordu.
+     */
+    .search-fields {
+        grid-template-columns:
+            minmax(0, 1fr) auto minmax(0, 1fr) minmax(0, 0.78fr);
         align-items: stretch;
-        gap: 0;
+        gap: 0.625rem 0.5rem;
     }
 
-    .location-fields > .field-card {
-        flex: 1 1 0;
-    }
-
+    /* Geniş ekranda buton kendi ızgara hücresinde, alanların arasında. */
     .swap-button {
-        position: static;
+        justify-self: center;
         align-self: center;
-        margin: 0 -14px;
-        flex: 0 0 auto;
+        margin: 0;
     }
 
+    .value-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .summary-card {
+        gap: 0.75rem 1rem;
+        padding: 1rem 1.25rem;
+    }
+}
+
+@media (min-width: 992px) {
+    .hero-curve {
+        height: 4rem;
+    }
+
+    .hero--list .hero-inner {
+        padding-bottom: 4.5rem;
+    }
+
+    /*
+     * Sefer kartı tek satıra açılıyor: saatler ve terminaller, olanaklar,
+     * firma, fiyat, seçim. Kolonlar sabit ölçülü çünkü kartların hizalı
+     * görünmesi listenin taranabilirliğini belirliyor.
+     */
     .journey-card {
-        padding: 0.75rem 1.25rem;
+        grid-template-columns:
+            minmax(0, 21rem)
+            minmax(0, 1fr)
+            minmax(0, 12rem)
+            minmax(0, 7.5rem)
+            auto;
+        grid-template-areas: "trip features partner price select";
+        gap: 1.25rem;
+        padding: 1rem 1.25rem;
+    }
+
+    /* Olanaklar kolonu solunda bir ayırıcı taşıyor. */
+    .journey-features {
+        padding-left: 1.25rem;
+        border-left: 1px solid var(--obilet-card-border);
+        align-self: stretch;
+        justify-content: center;
+    }
+
+    .journey-partner {
+        justify-content: flex-end;
+    }
+
+    .journey-price {
+        text-align: center;
+    }
+}
+
+/* --- Hareket azaltma ----------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition: none !important;
+        animation: none !important;
     }
 }
