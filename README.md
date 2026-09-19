@@ -14,6 +14,17 @@ Arayüz verilen iki masaüstü tasarımını izler.
 
 Kurulum mobil-öncelikli: taban stiller dar ekranı tarif eder, medya sorguları genişlikte verilen masaüstü düzenine açar. Gerekçe ve kaydedilen ödünleşmeler `docs/adr/0007`'de.
 
+İki kırılma noktası ölçümle belirlendi, tahminle değil:
+
+| Bileşen | Tek satıra geçiş | Neden orada |
+|---|---|---|
+| Arama formu alanları | **992px** | 768–991'de Bootstrap container'ı 720px'te kalıyor, ad kutusuna 91px düşüyor ve "İstanbul Avrupa" (107px) kırpılıyordu |
+| Sefer kartı | **1200px** | 992–1199'da olanak kolonuna 96px kalıyor, ikonlar sarıyor ve kart yükseklikleri 95–135px arasına dağılıyordu |
+
+Ana sayfanın hero'su geniş ekranda `min-height: 82vh` alır. Ölçüm: yüksekliği yalnızca içeriğinden geliyordu ve 2560×1440'ta ekranın **%41,9'u**, 1920×1080'de **%22,5'i** altta boş kalıyordu. `vh` bilinçli olarak yalnızca ≥992px'te kullanılıyor; mobil tarayıcılarda adres çubuğu yüzünden `vh` değişken.
+
+Arayüz 320px'ten 2560px'e kadar on dokuz genişlikte sınandı: hiçbirinde yatay kaydırma veya kırpılan içerik yok. 320px'te uzun terminal ve firma adları üç nokta ile kısalır (tam metin `title` özniteliğinde), koltuk düzeni hücresi ikinci satıra sarar.
+
 ---
 
 ## Çalıştırma
