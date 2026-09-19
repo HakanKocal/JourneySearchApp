@@ -199,6 +199,7 @@
                 messages: {
                     noResults: @Html.Raw(Json.Serialize(L["Search_NoResults"].Value)),
                     typeMore: @Html.Raw(Json.Serialize(L["Search_TypeMoreFormat", minQueryLength].Value)),
+                    placeholder: @Html.Raw(Json.Serialize(L["Search_Placeholder"].Value)),
                     sameLocation: @Html.Raw(Json.Serialize(L["Validation_SameLocation"].Value)),
                     pastDate: @Html.Raw(Json.Serialize(L["Validation_PastDate"].Value))
                 }
@@ -240,8 +241,38 @@
                     searchField: ['name'],
                     maxOptions: 20,
                     create: false,
+                    placeholder: config.messages.placeholder,
                     // Tom Select'in yerleşik gecikmesi; her tuşta istek atmaz.
                     loadThrottle: 300,
+
+                    // Kullanıcı yazmaya başladığında seçili değer gizleniyor.
+                    //
+                    // Sebebi: Tom Select tek seçimli alanlarda seçili öğeyi
+                    // kontrolde bırakıyor ve yazılan metni onun yanına
+                    // ekliyor, dolayısıyla "Ankara" ile "rize" yan yana
+                    // görünüyordu. Gizleme CSS'te, `has-typed` sınıfına bağlı.
+                    //
+                    // Neden odaklanmada değil de yazmaya başlayınca: alana
+                    // dokunan kullanıcı henüz bir şey yazmadıysa mevcut
+                    // seçimini görmeye devam etmeli. Yer tutucuya yazmak
+                    // denendi ve işe yaramadı — Tom Select odaklanmada kendi
+                    // `updatePlaceholder` çağrısıyla üzerine yazıyor.
+                    //
+                    // Değer gizlenirken silinmiyor: silmek daha basit olurdu
+                    // ama seçim yapmadan alandan çıkan kullanıcıyı boş bir
+                    // alanla bırakırdı.
+                    onType: function (text) {
+                        this.wrapper.classList.toggle(
+                            'has-typed', String(text || '').length > 0);
+                    },
+
+                    onBlur: function () {
+                        this.wrapper.classList.remove('has-typed');
+                    },
+
+                    onChange: function () {
+                        this.wrapper.classList.remove('has-typed');
+                    },
 
                     score: function (search) {
                         const needle = helpers.foldTurkish(search);

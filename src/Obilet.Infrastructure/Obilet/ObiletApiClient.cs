@@ -156,6 +156,11 @@ public sealed class ObiletApiClient : IObiletApiClient
             AvailableSeats: payload.AvailableSeats,
             OriginStation: detail.Origin,
             DestinationStation: detail.Destination,
+
+            // Lokasyon adları sefer kaydının kendisinde, terminal adları ise
+            // journey alt nesnesinde. İkisi farklı bilgi; bkz. payload notu.
+            OriginLocation: payload.OriginLocation,
+            DestinationLocation: payload.DestinationLocation,
             Departure: detail.Departure,
             Arrival: detail.Arrival,
             Duration: detail.Duration,

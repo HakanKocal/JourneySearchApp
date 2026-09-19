@@ -11,3 +11,13 @@ Kısıt README dosyasında açıkça belgelenir. Şartnamenin yazıldığı gibi
 ## Consequences
 
 Arama sonuçlarının hiçbir zaman boş dönmediği de doğrulandı — anlamsız girdide API en popüler 10 lokasyona düşüyor. Bu nedenle "sonuç bulunamadı" durumu API yanıtından türetilemez; sunucu tarafında ayrı bir eşleşme doğrulaması gerekir.
+
+## Bu kısıtın yol açtığı bir hata ve düzeltmesi
+
+Sefer sayfası, sorgulanan lokasyonların adlarını bu 20 kayıtlık listeden çözüyordu. Listede olmayan bir lokasyon seçildiğinde ad bulunamıyor ve arayüz kimliğe düşüyordu: kullanıcı arama yoluyla Rize'yi seçtiğinde sefer sayfasının özet kartında "Rize" değil **"400"** görüyordu. Kısıtın kendisi kabul edilmişti ama bu sonucu fark edilmemişti.
+
+Düzeltme, adın **doğru kaynağını** bulmakla geldi: API her sefer kaydında `origin-location` ve `destination-location` alanlarını zaten gönderiyor. Bu alanlar varsayılan listeden bağımsız, sorguya özel ve Market Locale'e göre çevrilmiş hâlde geliyor. Yani ad artık listeden değil seferin kendisinden okunuyor ve 20 kayıt kısıtı sefer sayfasını hiç etkilemiyor.
+
+Karıştırılmaması gereken bir ayrım var: `journey.origin` **terminalin** adını taşıyor ("Esenler Otogarı"), `origin-location` ise lokasyonun adını ("İstanbul Avrupa"). Kartta ikisi de gösteriliyor ve yanlış alanı seçmek hata vermez, yalnızca ekranda yanlış metin gösterir. Bir test iki alan çiftini bilinçli olarak farklı değerlerle besleyerek bunu koruyor.
+
+Geriye tek bir boşluk kalıyor: sorgu **hiç sefer döndürmezse** okunacak kayıt da yok ve lokasyon varsayılan listede değilse ad yine kimliğe düşer. API kimlikten ada çözüm yapan bir uç nokta sunmadığı için (kimlikle arama denendi, boş dönüyor) bu durumda elde daha iyi bir kaynak yok.

@@ -78,25 +78,70 @@ public sealed class JourneyController : Controller
         var journeys = await _journeyService.SearchAsync(
             originId, destinationId, departureDate, cancellationToken);
 
-        // Başlıkta lokasyon adlarını gösterebilmek için isimler çözülür.
-        // Bu çağrı önbelleklidir, dolayısıyla ek bir API isteği getirmez.
-        var locations = await _locationService.GetDefaultAsync(cancellationToken);
+        var (originName, destinationName) =
+            await ResolveNamesAsync(journeys, originId, destinationId, cancellationToken);
 
         return View(new JourneyListViewModel(
             Journeys: journeys,
             OriginId: originId,
             DestinationId: destinationId,
             DepartureDate: departureDate,
-            OriginName: NameOf(locations, originId),
-            DestinationName: NameOf(locations, destinationId),
+            OriginName: originName,
+            DestinationName: destinationName,
             Today: Today()));
     }
 
+    /// <summary>
+    /// Sorgulanan lokasyonların gösterilecek adlarını çözer.
+    /// </summary>
     /// <remarks>
-    /// Ad bulunamayabilir: varsayılan liste sistemdeki tüm lokasyonları
-    /// içermiyor ve kullanıcı arama yoluyla listede olmayan bir lokasyon
-    /// seçmiş olabilir. Bu durumda başlık kimliğe düşer, sayfa bozulmaz.
+    /// <para>
+    /// Asıl kaynak seferlerin kendisi: API her sefer kaydında kalkış ve varış
+    /// <b>lokasyonunun</b> adını gönderiyor. Bu, bir hatayı düzeltiyor —
+    /// adlar önceden yalnızca varsayılan 20 kayıtlık listeden çözülüyordu ve
+    /// o listede olmayan bir lokasyon seçildiğinde ada değil kimliğe
+    /// düşülüyordu: kullanıcı "Rize" yerine "400" görüyordu. Varsayılan
+    /// listenin tüm lokasyonları içermemesi bir API kısıtı; bkz. docs/adr/0004.
+    /// </para>
+    /// <para>
+    /// Varsayılan listeye yalnızca gerekli olduğunda bakılıyor: sonuç boşsa
+    /// okunacak sefer kaydı da yok. O çağrı önbellekli, yani ek bir API
+    /// isteği getirmiyor, ama gereksizken de yapılmasına gerek yok.
+    /// </para>
+    /// <para>
+    /// Her iki kaynak da yetersiz kalırsa ad <c>null</c> döner ve arayüz
+    /// kimliği gösterir. Bu yalnızca sefer bulunmayan bir sorguda, hem de
+    /// varsayılan listede olmayan bir lokasyon için mümkün; API kimlikten ada
+    /// çözüm yapan bir uç nokta sunmadığı için daha iyisi elde yok.
+    /// </para>
     /// </remarks>
+    private async Task<(string? Origin, string? Destination)> ResolveNamesAsync(
+        IReadOnlyList<Application.Models.Journey> journeys,
+        int originId,
+        int destinationId,
+        CancellationToken cancellationToken)
+    {
+        // Tüm kayıtlar aynı güzergâhı bildiriyor; ilki yeterli.
+        var sample = journeys.Count > 0 ? journeys[0] : null;
+
+        var origin = NullIfBlank(sample?.OriginLocation);
+        var destination = NullIfBlank(sample?.DestinationLocation);
+
+        if (origin is not null && destination is not null)
+        {
+            return (origin, destination);
+        }
+
+        var locations = await _locationService.GetDefaultAsync(cancellationToken);
+
+        return (
+            origin ?? NameOf(locations, originId),
+            destination ?? NameOf(locations, destinationId));
+    }
+
+    private static string? NullIfBlank(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value;
+
     private static string? NameOf(
         IEnumerable<Application.Models.BusLocation> locations,
         int id) =>

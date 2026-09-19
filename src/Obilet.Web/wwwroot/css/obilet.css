@@ -1060,6 +1060,25 @@ body {
     white-space: nowrap;
 }
 
+/*
+ * Kullanıcı yazmaya başladığında seçili değer gizlenir.
+ *
+ * Tom Select tek seçimli alanlarda seçili öğeyi kontrolde bırakıyor ve
+ * yazılan metni onun yanına ekliyor; sonuç "Ankara" ile "rize"nin yan yana
+ * görünmesi oluyordu.
+ *
+ * `has-typed` sınıfını Tom Select değil biz koyuyoruz; Tom Select yazılan
+ * metnin varlığını yansıtan bir sınıf sunmuyor. Bkz. Home/Index.cshtml
+ * içindeki onType. Yalnızca odaklanmaya bağlamak, alana dokunup henüz bir
+ * şey yazmamış kullanıcının seçimini de gizlerdi.
+ *
+ * Gizlemek değeri silmiyor: seçim yapmadan alandan çıkan kullanıcı
+ * değerini geri görüyor.
+ */
+.field-card .ts-wrapper.single.has-typed .ts-control > .item {
+    display: none;
+}
+
 .field-card .ts-control input {
     font-size: 0.9375rem;
 }

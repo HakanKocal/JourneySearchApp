@@ -79,7 +79,7 @@ Bu durumda uygulama hâlâ Elasticsearch'e yazmayı dener, ulaşamaz ve günlük
 ### Testler
 
 ```bash
-dotnet test                # 205 test
+dotnet test                # 208 test
 node --test tests/js/      # 26 test
 ```
 
@@ -163,7 +163,7 @@ Obilet.sln
 │   ├── Obilet.Application/     Servisler, alan modelleri, arayüzler, kurallar
 │   └── Obilet.Infrastructure/  obilet API istemcisi, önbellek, yapılandırma
 ├── tests/
-│   ├── Obilet.Tests/           xUnit (205 test)
+│   ├── Obilet.Tests/           xUnit (208 test)
 │   └── js/                     Node test runner (26 test)
 └── docs/adr/                   Mimari karar kayıtları
 ```
@@ -223,5 +223,6 @@ Düzeltmeleri yazarken bir de kendi hatamı buldum: `25:30:00` için eklediğim 
 - **Türkçe arama katlaması iki yerde:** C# (`TurkishSearchText`) ve JavaScript (`search-form.js`). Tek yerde tutmak mümkün değil, çünkü sunucu API sonucunu, istemci ise sayfayla birlikte gelen varsayılan listeyi süzüyor. Kuralların ayrışmaması gerektiği her iki dosyada yorumla belirtildi.
 - **Tarih alanının görünen biçimi** yerel tarayıcı seçicisinden gelir ve işletim sisteminin diline göre belirlenir, sayfanın diline göre değil. Yerel seçiciyi değiştirmek erişilebilirlik ve mobil klavye desteğinden ödün vermek olurdu.
 - **`ApiClientToken` `appsettings.json` içinde.** Ödev dokümanında açıkça verildiği ve projenin kurulumsuz çalışması gerektiği için. Gerçek bir üretim ortamında ortam değişkeni veya secret deposu kullanılır.
+- **Sefer bulunmayan bir sorguda lokasyon adı kimliğe düşebilir.** Sefer sayfası lokasyon adlarını seferlerin kendisinden okur — API her sefer kaydında `origin-location` / `destination-location` gönderiyor. Sorgu hiç sefer döndürmezse okunacak kayıt olmadığı için varsayılan 20 kayıtlık listeye bakılır; lokasyon o listede de yoksa ad yerine kimlik görünür. API kimlikten ada çözüm yapan bir uç nokta sunmuyor (kimlikle arama denendi, boş dönüyor). Bkz. `docs/adr/0004`.
 - **Tanıtım etiketlerinin bazıları düşük kontrastlı.** Renkler API'den geliyor ve renk kararının sahibi operatör kabul edildi. İndirim kodlarında API yeşil bildiriyor ve tasarımdaki görünüm birebir çıkıyor; "Relax Sefer" gibi nitelik etiketlerinde gri bildiriyor ve o gri WCAG AA eşiğinin altında kalıyor. Kendi yeşilimiz yalnızca API renk bildirmediğinde varsayılan olarak kullanılıyor.
 - **Sıralama kutusu JavaScript gerektirir.** Varsayılan sıra — kalkış anına göre artan, yani şartnamenin istediği sıra — sunucuda kuruluyor, dolayısıyla JavaScript kapalıyken liste doğru sırada gelir; yalnızca fiyat ve süreye göre yeniden sıralama çalışmaz.

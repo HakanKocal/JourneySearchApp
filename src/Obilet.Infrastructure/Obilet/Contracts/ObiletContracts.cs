@@ -115,6 +115,28 @@ internal sealed class BusJourneyPayload
     public int TotalSeats { get; init; }
     public int AvailableSeats { get; init; }
 
+    /// <summary>
+    /// Kalkış lokasyonunun (şehir) adı.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Bu alanlar bir hatayı düzeltmek için modellendi. Sefer sayfası
+    /// lokasyon adlarını varsayılan 20 kayıtlık listeden çözüyordu ve o
+    /// listede olmayan bir lokasyon seçildiğinde ada değil kimliğe
+    /// düşüyordu: kullanıcı "Rize" yerine "400" görüyordu. API adı her
+    /// sefer kaydında zaten gönderiyor, dolayısıyla doğru kaynak burası.
+    /// </para>
+    /// <para>
+    /// <c>journey.origin</c> ile karıştırılmamalı: o alan <b>terminalin</b>
+    /// adını taşıyor ("Esenler Otogarı"), bu ise lokasyonun adını
+    /// ("İstanbul Avrupa"). İkisi farklı ve kartta ikisi de gösteriliyor.
+    /// </para>
+    /// </remarks>
+    public string? OriginLocation { get; init; }
+
+    /// <summary>Varış lokasyonunun (şehir) adı; bkz. <see cref="OriginLocation"/>.</summary>
+    public string? DestinationLocation { get; init; }
+
     /// <summary>Seferin zaman, güzergâh ve fiyat bilgilerini taşıyan alt nesne.</summary>
     public JourneyDetailPayload? Journey { get; init; }
 

@@ -40,6 +40,8 @@ public sealed class JourneyServiceTests
         AvailableSeats: 10,
         OriginStation: "Esenler Otogarı",
         DestinationStation: "Ankara (Aşti) Otogarı",
+        OriginLocation: "İstanbul Avrupa",
+        DestinationLocation: "Ankara",
         Departure: DateTime.Parse(departure),
         Arrival: DateTime.Parse(departure).AddHours(6),
         Duration: TimeSpan.FromHours(6),

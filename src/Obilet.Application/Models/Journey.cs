@@ -25,6 +25,12 @@ namespace Obilet.Application.Models;
 /// <param name="AvailableSeats">Boş koltuk sayısı.</param>
 /// <param name="OriginStation">Kalkış terminalinin adı.</param>
 /// <param name="DestinationStation">Varış terminalinin adı.</param>
+/// <param name="OriginLocation">
+/// Kalkış lokasyonunun (şehir) adı — terminal adı değil.
+/// </param>
+/// <param name="DestinationLocation">
+/// Varış lokasyonunun (şehir) adı — terminal adı değil.
+/// </param>
 /// <param name="Departure">
 /// Kalkış anı. Tarih bileşeni önemlidir: dönen küme istenen günle sınırlı
 /// değil, gece yarısını aşan seferler ertesi güne taşıyor.
@@ -58,6 +64,8 @@ public sealed record Journey(
     int AvailableSeats,
     string? OriginStation,
     string? DestinationStation,
+    string? OriginLocation,
+    string? DestinationLocation,
     DateTime Departure,
     DateTime Arrival,
     TimeSpan? Duration,
