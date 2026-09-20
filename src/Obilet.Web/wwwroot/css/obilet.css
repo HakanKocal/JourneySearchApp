@@ -1,4 +1,4 @@
-﻿/*
+/*
  * obilet.com sefer arama — görsel dil.
  *
  * Palet ve yerleşim, ödevin sonraki aşamasında verilen iki masaüstü
@@ -620,11 +620,6 @@ body {
     box-shadow: var(--obilet-card-shadow-lg);
 }
 
-/*
- * Kartın içindeki alan ızgarası ana sayfayla aynı sınıfı (.search-fields)
- * paylaşıyor, dolayısıyla burada yalnızca kart içindeki payı belirtiliyor.
- * Dar ekranda tam satır alır, geniş ekranda eylemlerin yanına geçer.
- */
 /*
  * Alan ızgarası ana sayfayla aynı sınıfı (.search-fields) paylaşıyor, o
  * yüzden burada yalnızca kart içindeki payı belirtiliyor.

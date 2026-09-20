@@ -20,7 +20,7 @@ Değişmeyen iki şey var. Birincisi, kurulum hâlâ **mobil-öncelikli**: taban
 
 - Kartlardaki "Seç" düğmesi tasarımda var ama **devre dışı**. Koltuk seçimi ve satın alma bu uygulamanın kapsamı dışında; çalışıyormuş gibi görünen bir düğme kullanıcıya ve değerlendiriciye yanlış bilgi verirdi. Devre dışı olduğu `disabled` ile yardımcı teknolojilere de bildiriliyor ve sebebi bir açıklama metniyle veriliyor.
 
-- Liste sayfasındaki tarih çipleri ve yön çevirme ikonu tasarımda görsel öğe; burada gerçek bağlantı. Aynı güzergâhın başka gününe veya ters yönüne tek tıkla gitmek, kullanıcıyı forma geri göndermekten daha az adım.
+- ~~Liste sayfasındaki tarih çipleri ve yön çevirme ikonu tasarımda görsel öğe; burada gerçek bağlantı. Aynı güzergâhın başka gününe veya ters yönüne tek tıkla gitmek, kullanıcıyı forma geri göndermekten daha az adım.~~ **Bu sonuç `docs/adr/0010` ile geçersiz kılındı.** Kart artık bir arama formu; bağlantılar kullanıcının açılır listede yaptığı seçimi sessizce çöpe attığı için çipler ve takas forma yazan düğmelere dönüştü. Bedeli, o iki kısayolun JavaScript gerektirmesi.
 
 - Dil değiştirici sayfanın altından hero'nun sağ üst köşesine taşındı ve kendi yarı saydam zeminini taşıyor. Zemin bir süs değil: mavi perde ekranın sağına ulaşmadığı için değiştirici fotoğrafın en parlak kısmının üzerine düşüyor ve beyaz metin kayboluyordu. Hero'su olmayan sayfalarda (hata ekranları) alt bilgideki kopya duruyor.
 

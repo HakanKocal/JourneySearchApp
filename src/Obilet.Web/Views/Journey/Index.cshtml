@@ -34,8 +34,9 @@
 
 @*
     Sefer listesi. Verilen tasarım izleniyor: fotoğraf zeminli kısa bir hero,
-    üzerine binen sorgu özeti kartı, ve her seferi tek satırda gösteren yatay
-    kartlar.
+    üzerine binen arama kartı, ve her seferi tek satırda gösteren yatay
+    kartlar. Tasarımda o kart yalnızca sorguyu özetliyordu; burada gerçek
+    bir form, gerekçesi kartın kendi yorumunda.
 *@
 
 @section Hero {
@@ -94,8 +95,16 @@
         <form asp-controller="Home" asp-action="Search" method="post"
               class="summary-card" id="search-form" novalidate>
 
-            @* İstemci tarafı doğrulama buraya yazıyor; sunucu hatası
-               kullanıcıyı forma döndürdüğü için burada gizli başlar. *@
+            @*
+                Yalnızca istemci tarafı doğrulama buraya yazıyor, o yüzden
+                gizli başlıyor.
+
+                Sunucu doğrulaması bu kutuyu hiç kullanmıyor: `Search`
+                eylemi hatalı sorguda ana sayfanın formunu döndürüyor ve
+                hata orada gösteriliyor. Yani JavaScript kapalıyken geçersiz
+                bir sorgu kullanıcıyı listeden ana sayfaya taşıyor. Bilinen
+                bir pürüz; bkz. README "Bilinen sınırlar".
+            *@
             <div id="validation-summary" class="alert alert-danger d-none"></div>
 
             <div class="search-fields">

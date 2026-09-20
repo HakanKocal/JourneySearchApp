@@ -12,21 +12,18 @@
  * katlama, tarih çekme, depolama okuma/yazma) ve Node ile test ediliyor.
  * Bu dosya ise DOM'a dokunan katman; tarayıcıda doğrulanıyor.
  *
+ * O ayrım yüzünden burada UMD sarmalayıcı yok: dosya `TomSelect`,
+ * `window` ve `document` kullanıyor, dolayısıyla Node'da yüklenemez ve
+ * `module.exports` dalı hiçbir zaman çalışmazdı. `search-form.js` ve
+ * `journey-list.js` sarmalayıcıyı test edilebilmek için taşıyor.
+ *
  * İki sayfanın tek farkı başlangıç değerlerinin nereden geldiği:
  * - Ana sayfa `restore: true` ile son aramayı depodan geri yükler.
  * - Sefer sayfasının başlangıç değeri adresin kendisidir, dolayısıyla
  *   `restore: false`; depodan okumak adresle çelişen bir form üretirdi.
  * İkisi de gönderim anında depoya yazar.
  */
-(function (root, factory) {
-    const api = factory();
-
-    if (typeof module !== 'undefined' && module.exports) {
-        module.exports = api;
-    } else {
-        root.ObiletSearchFields = api;
-    }
-})(typeof self !== 'undefined' ? self : this, function () {
+(function (root) {
     'use strict';
 
     /**
@@ -63,8 +60,23 @@
             valueField: 'id',
             labelField: 'name',
             searchField: ['name'],
-            maxOptions: 20,
             create: false,
+
+            // Çizilen seçenek sayısı sınırlanmıyor.
+            //
+            // Burada 20 yazıyordu ve tam olarak kullanıcının şikâyet ettiği
+            // belirtiyi üretiyordu: varsayılan liste 20 kayıt (bkz.
+            // docs/adr/0004) ve sorgulanan lokasyon o listede değilse view
+            // 21. seçeneği ekliyor. Ölçüldü — modelde 21 seçenek varken
+            // açılır listede 20 çiziliyor ve düşen kayıt listenin sonundaki
+            // "Bartın" oluyordu. Aynı durum ana sayfada da oluşuyor:
+            // depodan geri yüklenen lokasyon listede yoksa `addOption`
+            // 21. seçeneği ekliyor.
+            //
+            // Sınır zaten API tarafında var: varsayılan çağrı 20 kayıt,
+            // arama da 20 ile sınırlı. Kendi başımıza ikinci bir tavan
+            // koymak, koruduğu bir şey olmadan son şehri gizliyordu.
+            maxOptions: null,
             placeholder: config.messages.placeholder,
             // Tom Select'in yerleşik gecikmesi; her tuşta istek atmaz.
             loadThrottle: 300,
@@ -171,7 +183,7 @@
         const date = document.getElementById(config.dateId);
 
         if (!helpers || !form || !origin || !destination || !date) {
-            return null;
+            return;
         }
 
         const summary = config.summaryId
@@ -263,18 +275,31 @@
             }
         }
 
-        function persistLastSearch() {
-            const originItem = selects.origin.options[selects.origin.getValue()];
-            const destinationItem =
-                selects.destination.options[selects.destination.getValue()];
+        /**
+         * Seçili öğeyi depoya yazılacak biçime çevirir.
+         *
+         * Adı kimlikle aynıysa ad sayılmıyor. Sebebi: lokasyon adı
+         * çözülemediğinde arayüz kimliği gösteriyor (bir API kısıtı,
+         * bkz. docs/adr/0004) ve o metin alanın içeriği oluyor. Onu ad
+         * olarak saklamak kimliği kalıcı hâle getiriyor ve kullanıcı
+         * sonraki ziyaretinde alanda şehir adı yerine "400" görüyordu.
+         * Boş bırakmak, adın sunucudan gelen seçenekten okunmasına
+         * izin veriyor.
+         */
+        function toStored(item) {
+            if (!item) return null;
 
+            const id = String(item.id);
+            const name = String(item.name || '').trim();
+
+            return { id: id, name: name === id ? '' : name };
+        }
+
+        function persistLastSearch() {
             helpers.writeLastSearch(storage, {
-                origin: originItem
-                    ? { id: String(originItem.id), name: originItem.name }
-                    : null,
-                destination: destinationItem
-                    ? { id: String(destinationItem.id), name: destinationItem.name }
-                    : null,
+                origin: toStored(selects.origin.options[selects.origin.getValue()]),
+                destination: toStored(
+                    selects.destination.options[selects.destination.getValue()]),
                 date: date.value
             });
         }
@@ -342,9 +367,7 @@
         }
 
         refreshChips();
-
-        return selects;
     }
 
-    return { init: init };
-});
+    root.ObiletSearchFields = { init: init };
+})(typeof self !== 'undefined' ? self : this);

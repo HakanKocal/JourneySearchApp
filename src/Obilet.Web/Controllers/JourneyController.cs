@@ -110,8 +110,11 @@ public sealed class JourneyController : Controller
     /// listenin tüm lokasyonları içermemesi bir API kısıtı; bkz. docs/adr/0004.
     /// </para>
     /// <para>
-    /// Yedek kaynak varsayılan listedir ve yalnızca sefer kaydı ada sahip
-    /// olmadığında devreye girer: sonuç boşsa okunacak kayıt da yok.
+    /// Yedek kaynak varsayılan listedir; sefer kaydı ad taşımıyorsa oradan
+    /// okunur ve pratikte bu yalnızca sonuç boşken olur, çünkü o zaman
+    /// okunacak kayıt yoktur. Liste çağıran tarafta zaten yapılıyor —
+    /// sayfadaki arama formunun açılır listeleri de onu kullanıyor — bu
+    /// yüzden buraya parametre olarak geçiliyor.
     /// </para>
     /// <para>
     /// Her iki kaynak da yetersiz kalırsa ad <c>null</c> döner ve arayüz
