@@ -14,6 +14,9 @@ namespace Obilet.Web.Models;
 /// <param name="Today">
 /// Pazarın saat diliminde bugünün tarihi.
 /// </param>
+/// <param name="Locations">
+/// Sayfadaki arama formunun açılır listelerini besleyen Bus Location'lar.
+/// </param>
 /// <remarks>
 /// <para>
 /// <paramref name="Today"/> yalnızca bir görüntü değeri değil: sayfadaki
@@ -30,8 +33,22 @@ public sealed record JourneyListViewModel(
     DateOnly DepartureDate,
     string? OriginName,
     string? DestinationName,
-    DateOnly Today)
+    DateOnly Today,
+    IReadOnlyList<BusLocation> Locations)
 {
+    /// <summary>
+    /// Açılır listede sorgulanan lokasyonun bulunup bulunmadığını söyler.
+    /// </summary>
+    /// <remarks>
+    /// Varsayılan liste sistemdeki tüm lokasyonları içermiyor (bkz.
+    /// docs/adr/0004). Kullanıcı arama yoluyla listede olmayan bir lokasyon
+    /// seçmiş olabilir; o durumda seçenek listeye elle eklenmeli, aksi hâlde
+    /// açılır liste sorgulanan lokasyonu hiç göstermez ve tarayıcı seçimi
+    /// ilk seçeneğe kaydırır — kullanıcı formu açtığında aradığı güzergâh
+    /// yerine başka bir şey görürdü.
+    /// </remarks>
+    public bool IsListed(int id) => Locations.Any(location => location.Id == id);
+
     /// <summary>Hiç sefer bulunamadı mı?</summary>
     /// <remarks>
     /// Boş sonuç bir hata değildir: seçilen gün için sefer olmaması veya iki

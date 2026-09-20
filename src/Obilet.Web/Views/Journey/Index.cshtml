@@ -1,6 +1,7 @@
 @using System.Globalization
 @using Microsoft.Extensions.Localization
 @using Obilet.Web
+@using Obilet.Application.Locations
 @using Obilet.Web.Formatting
 @model JourneyListViewModel
 @inject IStringLocalizer<SharedResource> L
@@ -14,13 +15,20 @@
     // için bu seferler sonda toplanır ve araya bir ayırıcı konur.
     var nextDayIndex = Model.FirstNextDayIndex;
 
-    // Özet kartındaki hızlı tarih çipleri. Aynı güzergâhın bugün ve yarınki
-    // seferlerine giden gerçek bağlantılar; hangisinin geçerli olduğu
-    // sorgulanan tarihten anlaşılıyor.
+    // Karttaki form alanları için ISO tarihler. type="date" ve istemci
+    // tarafı karşılaştırmalar kültürden bağımsız biçim istiyor.
+    var todayIso = Model.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+    var tomorrowIso = Model.Today.AddDays(1).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+    var selectedIso = Model.DepartureDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+    var minQueryLength = ILocationService.MinimumQueryLength;
+
+    // Hızlı tarih çipleri. Kimlikler ana sayfadakilerle aynı: alanların
+    // davranışı iki sayfada aynı dosyadan geliyor ve o dosya kimliklere
+    // göre bağlanıyor.
     var chips = new[]
     {
-        (Date: Model.Today, Label: L["Search_Today"].Value),
-        (Date: Model.Today.AddDays(1), Label: L["Search_Tomorrow"].Value),
+        (ElementId: "chip-today", Iso: todayIso, Label: L["Search_Today"].Value),
+        (ElementId: "chip-tomorrow", Iso: tomorrowIso, Label: L["Search_Tomorrow"].Value),
     };
 }
 
@@ -67,61 +75,115 @@
 <div class="journey-page">
     <div class="container">
         @*
-            Sorgu özeti: hangi güzergâh ve hangi gün sorgulandı. Tasarımda
-            arama alanlarına benzeyen ama değer gösteren bir kart; burada da
-            öyle, ek olarak yön çevirme ve tarih çipleri gerçek bağlantı.
+            Sorgu özeti ve yeni arama, aynı kart.
+
+            Tasarımda bu kart arama alanlarına benzeyen ama yalnızca değer
+            gösteren bir şeritti. Burada gerçek bir form: kullanıcı sonuçları
+            görürken başka bir şehir veya tarih seçip yeniden sorgulayabiliyor,
+            yani güzergâhı değiştirmek için ana sayfaya dönmek gerekmiyor.
+
+            Alanlar ana sayfanın kartıyla aynı işaretlemeyi ve aynı
+            `.search-fields` ızgarasını kullanıyor; davranışları da aynı
+            dosyadan geliyor (wwwroot/js/search-fields.js). Tek fark
+            başlangıç değerinin kaynağı: burada adres, ana sayfada depo.
+
+            Form ana sayfanın `Search` eylemine gidiyor. O eylem doğrulamayı
+            yapıp sefer sayfasına yönlendirdiği için ayrı bir uç noktaya
+            gerek yok; JavaScript kapalıyken de çalışır.
         *@
-        <div class="summary-card">
-            <div class="summary-item">
-                <svg class="icon" aria-hidden="true"><use href="#icon-pin" /></svg>
-                <div class="field-body">
-                    <span class="field-label">@L["Search_Origin"]</span>
-                    <span class="summary-value" title="@originLabel">@originLabel</span>
+        <form asp-controller="Home" asp-action="Search" method="post"
+              class="summary-card" id="search-form" novalidate>
+
+            @* İstemci tarafı doğrulama buraya yazıyor; sunucu hatası
+               kullanıcıyı forma döndürdüğü için burada gizli başlar. *@
+            <div id="validation-summary" class="alert alert-danger d-none"></div>
+
+            <div class="search-fields">
+                <div class="field-card">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-pin" /></svg>
+                    <div class="field-body">
+                        <label class="field-label" for="origin">@L["Search_Origin"]</label>
+                        <select name="OriginId" id="origin" data-location-select>
+                            @*
+                                Sorgulanan lokasyon varsayılan listede olmayabilir
+                                (bkz. docs/adr/0004): kullanıcı onu arama yoluyla
+                                seçmiş olabilir. Seçenek eklenmezse tarayıcı seçimi
+                                ilk kayda kaydırır ve kullanıcı formu açtığında
+                                aradığı güzergâh yerine başka bir şey görürdü.
+                            *@
+                            @if (!Model.IsListed(Model.OriginId))
+                            {
+                                <option value="@Model.OriginId" selected>@originLabel</option>
+                            }
+                            @foreach (var location in Model.Locations)
+                            {
+                                <option value="@location.Id"
+                                        selected="@(location.Id == Model.OriginId)">@location.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <svg class="icon" aria-hidden="true"><use href="#icon-chevron-down" /></svg>
+                </div>
+
+                <button type="button" class="swap-button" id="swap"
+                        title="@L["Journey_SwapDirection"]" aria-label="@L["Journey_SwapDirection"]">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-swap" /></svg>
+                </button>
+
+                <div class="field-card">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-pin" /></svg>
+                    <div class="field-body">
+                        <label class="field-label" for="destination">@L["Search_Destination"]</label>
+                        <select name="DestinationId" id="destination" data-location-select>
+                            @if (!Model.IsListed(Model.DestinationId))
+                            {
+                                <option value="@Model.DestinationId" selected>@destinationLabel</option>
+                            }
+                            @foreach (var location in Model.Locations)
+                            {
+                                <option value="@location.Id"
+                                        selected="@(location.Id == Model.DestinationId)">@location.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <svg class="icon" aria-hidden="true"><use href="#icon-chevron-down" /></svg>
+                </div>
+
+                <div class="field-card">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-calendar" /></svg>
+                    <div class="field-body">
+                        <label class="field-label" for="departure-date">@L["Search_Date"]</label>
+                        @*
+                            type="date" her zaman ISO biçimi gönderir, bu yüzden
+                            kültüre bağlı ayrıştırma sorunu oluşmaz. min özniteliği
+                            tarayıcı seviyesinde geçmiş tarihi engeller; aynı kural
+                            sunucuda da uygulanıyor, çünkü bu yalnızca bir kolaylık.
+                        *@
+                        <input type="date" name="DepartureDate" id="departure-date"
+                               class="field-value" min="@todayIso" value="@selectedIso" />
+                    </div>
                 </div>
             </div>
 
-            <a class="summary-swap"
-               asp-controller="Journey" asp-action="Index"
-               asp-route-originId="@Model.DestinationId"
-               asp-route-destinationId="@Model.OriginId"
-               asp-route-date="@Model.DepartureDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)"
-               title="@L["Journey_SwapDirection"]" aria-label="@L["Journey_SwapDirection"]">
-                <svg class="icon" aria-hidden="true"><use href="#icon-swap" /></svg>
-            </a>
-
-            <div class="summary-item">
-                <svg class="icon" aria-hidden="true"><use href="#icon-pin" /></svg>
-                <div class="field-body">
-                    <span class="field-label">@L["Search_Destination"]</span>
-                    <span class="summary-value" title="@destinationLabel">@destinationLabel</span>
+            <div class="summary-actions">
+                @* Çipler tarih alanını ayarlıyor; ana sayfadakiyle aynı davranış. *@
+                <div class="summary-chips">
+                    @foreach (var chip in chips)
+                    {
+                        <button type="button" class="date-chip" id="@chip.ElementId"
+                                data-date="@chip.Iso">
+                            <svg class="icon" aria-hidden="true"><use href="#icon-calendar" /></svg>
+                            @chip.Label
+                        </button>
+                    }
                 </div>
-            </div>
 
-            <div class="summary-item">
-                <svg class="icon" aria-hidden="true"><use href="#icon-calendar" /></svg>
-                <div class="field-body">
-                    <span class="field-label">@L["Search_Date"]</span>
-                    <span class="summary-value">@Model.DepartureDate.ToString("d MMMM yyyy")</span>
-                </div>
+                <button type="submit" class="btn-obilet btn-obilet--compact">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-search" /></svg>
+                    @L["Search_Submit"]
+                </button>
             </div>
-
-            <div class="summary-chips">
-                @foreach (var chip in chips)
-                {
-                    var isActive = chip.Date == Model.DepartureDate;
-
-                    <a class="date-chip @(isActive ? "is-active" : string.Empty)"
-                       asp-controller="Journey" asp-action="Index"
-                       asp-route-originId="@Model.OriginId"
-                       asp-route-destinationId="@Model.DestinationId"
-                       asp-route-date="@chip.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)"
-                       aria-current="@(isActive ? "page" : "false")">
-                        <svg class="icon" aria-hidden="true"><use href="#icon-calendar" /></svg>
-                        @chip.Label
-                    </a>
-                }
-            </div>
-        </div>
+        </form>
 
         @if (Model.IsEmpty)
         {
@@ -379,10 +441,48 @@
     </div>
 </div>
 
+@section Styles {
+    @* Aranabilir açılır liste; özet kartındaki lokasyon alanları için. *@
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/css/tom-select.bootstrap5.min.css" />
+}
+
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/js/tom-select.complete.min.js"></script>
+    <script src="~/js/search-form.js" asp-append-version="true"></script>
+    <script src="~/js/search-fields.js" asp-append-version="true"></script>
     <script src="~/js/journey-list.js" asp-append-version="true"></script>
     <script>
         (function () {
+            // Karttaki arama alanları. Ana sayfayla aynı dosyadan, aynı
+            // kimliklerle; tek fark son aramanın geri yüklenmemesi.
+            window.ObiletSearchFields.init({
+                formId: 'search-form',
+                originId: 'origin',
+                destinationId: 'destination',
+                dateId: 'departure-date',
+                swapId: 'swap',
+                summaryId: 'validation-summary',
+                chipIds: { today: 'chip-today', tomorrow: 'chip-tomorrow' },
+
+                // Bu sayfanın başlangıç değeri adresin kendisi. Depodan
+                // okumak, adreste yazan güzergâhla çelişen bir form
+                // üretirdi — kullanıcı Ankara'nın seferlerine bakarken
+                // formda İzmir görürdü. Gönderimde depoya yine yazılıyor.
+                restore: false,
+
+                minQueryLength: @minQueryLength,
+                searchUrl: '@Url.Action("Search", "Locations")',
+                today: '@todayIso',
+                tomorrow: '@tomorrowIso',
+                messages: {
+                    noResults: @Html.Raw(Json.Serialize(L["Search_NoResults"].Value)),
+                    typeMore: @Html.Raw(Json.Serialize(L["Search_TypeMoreFormat", minQueryLength].Value)),
+                    placeholder: @Html.Raw(Json.Serialize(L["Search_Placeholder"].Value)),
+                    sameLocation: @Html.Raw(Json.Serialize(L["Validation_SameLocation"].Value)),
+                    pastDate: @Html.Raw(Json.Serialize(L["Validation_PastDate"].Value))
+                }
+            });
+
             // Yüklenemeyen firma logolarını ve olanak ikonlarını gizler. Inline
             // onerror yerine burada bağlanıyor; işaretleme temiz kalsın.
             //

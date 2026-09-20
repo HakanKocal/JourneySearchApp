@@ -78,8 +78,13 @@ public sealed class JourneyController : Controller
         var journeys = await _journeyService.SearchAsync(
             originId, destinationId, departureDate, cancellationToken);
 
+        // Sayfadaki arama formunun açılır listeleri için gerekiyor; lokasyon
+        // adlarının yedek kaynağı da bu liste. Çağrı önbelleklidir,
+        // dolayısıyla ek bir API isteği getirmez.
+        var locations = await _locationService.GetDefaultAsync(cancellationToken);
+
         var (originName, destinationName) =
-            await ResolveNamesAsync(journeys, originId, destinationId, cancellationToken);
+            ResolveNames(journeys, originId, destinationId, locations);
 
         return View(new JourneyListViewModel(
             Journeys: journeys,
@@ -88,7 +93,8 @@ public sealed class JourneyController : Controller
             DepartureDate: departureDate,
             OriginName: originName,
             DestinationName: destinationName,
-            Today: Today()));
+            Today: Today(),
+            Locations: locations));
     }
 
     /// <summary>
@@ -104,9 +110,8 @@ public sealed class JourneyController : Controller
     /// listenin tüm lokasyonları içermemesi bir API kısıtı; bkz. docs/adr/0004.
     /// </para>
     /// <para>
-    /// Varsayılan listeye yalnızca gerekli olduğunda bakılıyor: sonuç boşsa
-    /// okunacak sefer kaydı da yok. O çağrı önbellekli, yani ek bir API
-    /// isteği getirmiyor, ama gereksizken de yapılmasına gerek yok.
+    /// Yedek kaynak varsayılan listedir ve yalnızca sefer kaydı ada sahip
+    /// olmadığında devreye girer: sonuç boşsa okunacak kayıt da yok.
     /// </para>
     /// <para>
     /// Her iki kaynak da yetersiz kalırsa ad <c>null</c> döner ve arayüz
@@ -115,28 +120,18 @@ public sealed class JourneyController : Controller
     /// çözüm yapan bir uç nokta sunmadığı için daha iyisi elde yok.
     /// </para>
     /// </remarks>
-    private async Task<(string? Origin, string? Destination)> ResolveNamesAsync(
+    private static (string? Origin, string? Destination) ResolveNames(
         IReadOnlyList<Application.Models.Journey> journeys,
         int originId,
         int destinationId,
-        CancellationToken cancellationToken)
+        IReadOnlyList<Application.Models.BusLocation> locations)
     {
         // Tüm kayıtlar aynı güzergâhı bildiriyor; ilki yeterli.
         var sample = journeys.Count > 0 ? journeys[0] : null;
 
-        var origin = NullIfBlank(sample?.OriginLocation);
-        var destination = NullIfBlank(sample?.DestinationLocation);
-
-        if (origin is not null && destination is not null)
-        {
-            return (origin, destination);
-        }
-
-        var locations = await _locationService.GetDefaultAsync(cancellationToken);
-
         return (
-            origin ?? NameOf(locations, originId),
-            destination ?? NameOf(locations, destinationId));
+            NullIfBlank(sample?.OriginLocation) ?? NameOf(locations, originId),
+            NullIfBlank(sample?.DestinationLocation) ?? NameOf(locations, destinationId));
     }
 
     private static string? NullIfBlank(string? value) =>

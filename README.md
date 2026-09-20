@@ -10,7 +10,9 @@ Arayüz verilen iki masaüstü tasarımını izler.
 
 **Ana sayfa** fotoğraf zeminli bir hero taşır: sol tarafta başlık ve tanıtım metni, üzerine binen beyaz bir arama kartı, hero'nun altında dört maddelik bir tanıtım şeridi. Arama kartında hızlı tarih çipleri (`Bugün` / `Yarın`), aranabilir kalkış ve varış alanları, aralarında bir takas düğmesi ve bir tarih alanı var.
 
-**Sefer listesi** aynı hero'nun kısa hâlini, üzerine binen bir sorgu özeti kartını ve her seferi tek satırda gösteren yatay kartları taşır. Tek satırlık düzen 1200px'ten başlar; altındaki genişliklerde kart yığılı düzene geçer ve olanaklar kendi satırını alır. Özet kartındaki tarih çipleri ve yön çevirme ikonu gerçek bağlantı: aynı güzergâhın başka gününe veya ters yönüne tek tıkla gidilir. Kartta kalkış, varış, süre, koltuk düzeni (`2+1` / `2+2`), terminaller, olanaklar, firma ve fiyat yer alır.
+**Sefer listesi** aynı hero'nun kısa hâlini, üzerine binen bir arama kartını ve her seferi tek satırda gösteren yatay kartları taşır. Tek satırlık düzen 1200px'ten başlar; altındaki genişliklerde kart yığılı düzene geçer ve olanaklar kendi satırını alır. Kartta kalkış, varış, süre, koltuk düzeni (`2+1` / `2+2`), terminaller, olanaklar, firma ve fiyat yer alır.
+
+Üstteki kart tasarımda yalnızca sorguyu özetleyen bir şeritti; burada **çalışan bir arama formu**: kullanıcı sonuçlara bakarken başka bir şehir veya tarih seçip yeniden sorgulayabiliyor, yani güzergâhı değiştirmek için ana sayfaya dönmesi gerekmiyor. Alanlar ana sayfayla aynı işaretlemeyi ve aynı davranışı (`wwwroot/js/search-fields.js`) paylaşıyor; tek fark başlangıç değerinin kaynağı — burada adres, ana sayfada `localStorage`. İkisi de gönderimde son aramayı kaydediyor, dolayısıyla listede yapılan bir değişiklik ana sayfaya da taşınıyor. Form ana sayfanın `Search` eylemine gittiği için JavaScript kapalıyken de çalışır.
 
 Kurulum mobil-öncelikli: taban stiller dar ekranı tarif eder, medya sorguları genişlikte verilen masaüstü düzenine açar. Gerekçe ve kaydedilen ödünleşmeler `docs/adr/0007`'de.
 
@@ -19,6 +21,7 @@ Kurulum mobil-öncelikli: taban stiller dar ekranı tarif eder, medya sorguları
 | Bileşen | Tek satıra geçiş | Neden orada |
 |---|---|---|
 | Arama formu alanları | **992px** | 768–991'de Bootstrap container'ı 720px'te kalıyor, ad kutusuna 91px düşüyor ve "İstanbul Avrupa" (107px) kırpılıyordu |
+| Liste sayfası arama kartı | **1400px** | Aynı satırı çipler ve sorgulama düğmesi (sabit 372px) paylaşıyor; 1200px'te alanlara 688px kalıyor ve "İstanbul Anadolu" (116px) kırpılıyordu. Altında çipler ve düğme alt satıra geçer |
 | Sefer kartı | **1200px** | 992–1199'da olanak kolonuna 96px kalıyor, ikonlar sarıyor ve kart yükseklikleri 95–135px arasına dağılıyordu |
 
 Ana sayfanın hero'su geniş ekranda `min-height: 82vh` alır. Ölçüm: yüksekliği yalnızca içeriğinden geliyordu ve 2560×1440'ta ekranın **%41,9'u**, 1920×1080'de **%22,5'i** altta boş kalıyordu. `vh` bilinçli olarak yalnızca ≥992px'te kullanılıyor; mobil tarayıcılarda adres çubuğu yüzünden `vh` değişken.
