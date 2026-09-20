@@ -92,6 +92,22 @@ Bu durumda uygulama hâlâ Elasticsearch'e yazmayı dener, ulaşamaz ve günlük
 
 > **Gereksinim:** .NET 10 SDK (doğrudan çalıştırma için) veya Docker. Depoda kendi `NuGet.config` dosyası var; makinede tanımlı özel paket beslemeleri bu çözüm için devre dışı bırakılır, böylece kimlik doğrulaması gerektiren bir besleme restore işlemini durdurmaz.
 
+### `ApiClientToken` nerede duruyor ve neden
+
+`ApiClientToken`, ödev dokümanında açıkça verilen sabit kimliktir ve `appsettings.json` içinde durur. Sebebi, projenin **hiçbir kurulum adımı olmadan** çalışması: değerlendirici klonlayıp `dotnet run` veya `docker compose up` diyebilmeli.
+
+Gerçek bir ortamda dosyada durmasına gerek yok ve bunun için **kod değişikliği de gerekmiyor** — yapılandırma katmanları gereğini zaten yapıyor:
+
+```bash
+# Ortam değişkeni appsettings.json'daki değeri ezer
+ObiletApi__ApiClientToken="<anahtar>" dotnet run --project src/Obilet.Web
+
+# veya geliştirme makinesinde dosyaya hiç yazmadan
+dotnet user-secrets set "ObiletApi:ApiClientToken" "<anahtar>" --project src/Obilet.Web
+```
+
+Bu yol doğrulandı: değişken bozuk bir değerle verildiğinde `client/getsession` reddediliyor ve ana sayfa 502 dönüyor; değişken olmadan aynı sayfa 200. Yani dosyadaki değer gerçekten eziliyor, `docker compose` da `ConnectionStrings__*` değerlerini aynı mekanizmayla sağlıyor.
+
 ### Testler
 
 ```bash
