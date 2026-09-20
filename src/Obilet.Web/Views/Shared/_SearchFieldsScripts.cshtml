@@ -1,0 +1,54 @@
+@using System.Globalization
+@using Microsoft.Extensions.Localization
+@using Obilet.Application.Locations
+@using Obilet.Web
+@model SearchFieldsScripts
+@inject IStringLocalizer<SharedResource> L
+@{
+    var todayIso = Model.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+    var tomorrowIso = Model.Today.AddDays(1).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+    var minQueryLength = ILocationService.MinimumQueryLength;
+}
+
+@*
+    Arama alanlarının istemci tarafı kurulumu. İki sayfa da bunu çağırıyor:
+    ana sayfanın hero kartı ve sefer listesi sayfasının arama kartı.
+
+    Öğe kimlikleri partial ile view'lar arasındaki sözleşme. İki sayfa da
+    aynılarını kullanıyor, bu yüzden parametre değil; bir view farklı bir
+    kimlik verirse alanlar sessizce ölmez, `init` gerekli öğeyi bulamayınca
+    hiç kurulmaz ve form düz select olarak çalışmaya devam eder.
+
+    Aranabilir açılır listenin kendi CSS'i `@@section Styles` üzerinden
+    yükleniyor ve bizim stil dosyamız ondan sonra geliyor; gerekçe
+    _Layout.cshtml içinde.
+*@
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/js/tom-select.complete.min.js"></script>
+<script src="~/js/search-form.js" asp-append-version="true"></script>
+<script src="~/js/search-fields.js" asp-append-version="true"></script>
+<script>
+    window.ObiletSearchFields.init({
+        formId: 'search-form',
+        originId: 'origin',
+        destinationId: 'destination',
+        dateId: 'departure-date',
+        swapId: 'swap',
+        summaryId: 'validation-summary',
+        chipIds: { today: 'chip-today', tomorrow: 'chip-tomorrow' },
+
+        restore: @(Model.RestoreLastSearch ? "true" : "false"),
+        noticeId: @Html.Raw(Json.Serialize(Model.NoticeElementId)),
+
+        minQueryLength: @minQueryLength,
+        searchUrl: '@Url.Action("Search", "Locations")',
+        today: '@todayIso',
+        tomorrow: '@tomorrowIso',
+        messages: {
+            noResults: @Html.Raw(Json.Serialize(L["Search_NoResults"].Value)),
+            typeMore: @Html.Raw(Json.Serialize(L["Search_TypeMoreFormat", minQueryLength].Value)),
+            placeholder: @Html.Raw(Json.Serialize(L["Search_Placeholder"].Value)),
+            sameLocation: @Html.Raw(Json.Serialize(L["Validation_SameLocation"].Value)),
+            pastDate: @Html.Raw(Json.Serialize(L["Validation_PastDate"].Value))
+        }
+    });
+</script>

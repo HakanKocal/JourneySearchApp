@@ -1,7 +1,6 @@
 @using System.Globalization
 @using Microsoft.Extensions.Localization
 @using Obilet.Web
-@using Obilet.Application.Locations
 @using Obilet.Web.Formatting
 @model JourneyListViewModel
 @inject IStringLocalizer<SharedResource> L
@@ -20,8 +19,6 @@
     var todayIso = Model.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
     var tomorrowIso = Model.Today.AddDays(1).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
     var selectedIso = Model.DepartureDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-    var minQueryLength = ILocationService.MinimumQueryLength;
-
     // Hızlı tarih çipleri. Kimlikler ana sayfadakilerle aynı: alanların
     // davranışı iki sayfada aynı dosyadan geliyor ve o dosya kimliklere
     // göre bağlanıyor.
@@ -80,17 +77,20 @@
 
             Tasarımda bu kart arama alanlarına benzeyen ama yalnızca değer
             gösteren bir şeritti. Burada gerçek bir form: kullanıcı sonuçları
-            görürken başka bir şehir veya tarih seçip yeniden sorgulayabiliyor,
-            yani güzergâhı değiştirmek için ana sayfaya dönmek gerekmiyor.
+            görürken başka bir Bus Location veya Departure Date seçip yeniden
+            sorgulayabiliyor, yani güzergâhı değiştirmek için ana sayfaya
+            dönmek gerekmiyor. Gerekçe ve ödünleşmeler docs/adr/0010'da.
 
             Alanlar ana sayfanın kartıyla aynı işaretlemeyi ve aynı
             `.search-fields` ızgarasını kullanıyor; davranışları da aynı
-            dosyadan geliyor (wwwroot/js/search-fields.js). Tek fark
-            başlangıç değerinin kaynağı: burada adres, ana sayfada depo.
+            partial'dan geliyor (_SearchFieldsScripts). Tek fark başlangıç
+            değerinin kaynağı: burada adres, ana sayfada depo.
 
-            Form ana sayfanın `Search` eylemine gidiyor. O eylem doğrulamayı
+            Form ana sayfanın `Search` eylemine gidiyor: o eylem doğrulamayı
             yapıp sefer sayfasına yönlendirdiği için ayrı bir uç noktaya
-            gerek yok; JavaScript kapalıyken de çalışır.
+            gerek yok. Alanlar düz `select` ve `input` olduğu için gönderim
+            JavaScript kapalıyken de çalışıyor; çipler ve takas düğmesi ise
+            çalışmıyor, gerekçesi ADR'de.
         *@
         <form asp-controller="Home" asp-action="Search" method="post"
               class="summary-card" id="search-form" novalidate>
@@ -456,42 +456,23 @@
 }
 
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/js/tom-select.complete.min.js"></script>
-    <script src="~/js/search-form.js" asp-append-version="true"></script>
-    <script src="~/js/search-fields.js" asp-append-version="true"></script>
+    @*
+        Karttaki arama alanları. Ana sayfayla aynı partial, aynı kimlikler;
+        tek fark son aramanın geri yüklenmemesi.
+
+        Bu sayfanın başlangıç değeri adresin kendisi. Depodan okumak,
+        adreste yazan güzergâhla çelişen bir form üretirdi — kullanıcı
+        Ankara'nın seferlerine bakarken formda İzmir görürdü. Gönderimde
+        depoya yine yazılıyor.
+    *@
+    <partial name="_SearchFieldsScripts"
+             model="new SearchFieldsScripts(
+                 Today: Model.Today,
+                 RestoreLastSearch: false)" />
+
     <script src="~/js/journey-list.js" asp-append-version="true"></script>
     <script>
         (function () {
-            // Karttaki arama alanları. Ana sayfayla aynı dosyadan, aynı
-            // kimliklerle; tek fark son aramanın geri yüklenmemesi.
-            window.ObiletSearchFields.init({
-                formId: 'search-form',
-                originId: 'origin',
-                destinationId: 'destination',
-                dateId: 'departure-date',
-                swapId: 'swap',
-                summaryId: 'validation-summary',
-                chipIds: { today: 'chip-today', tomorrow: 'chip-tomorrow' },
-
-                // Bu sayfanın başlangıç değeri adresin kendisi. Depodan
-                // okumak, adreste yazan güzergâhla çelişen bir form
-                // üretirdi — kullanıcı Ankara'nın seferlerine bakarken
-                // formda İzmir görürdü. Gönderimde depoya yine yazılıyor.
-                restore: false,
-
-                minQueryLength: @minQueryLength,
-                searchUrl: '@Url.Action("Search", "Locations")',
-                today: '@todayIso',
-                tomorrow: '@tomorrowIso',
-                messages: {
-                    noResults: @Html.Raw(Json.Serialize(L["Search_NoResults"].Value)),
-                    typeMore: @Html.Raw(Json.Serialize(L["Search_TypeMoreFormat", minQueryLength].Value)),
-                    placeholder: @Html.Raw(Json.Serialize(L["Search_Placeholder"].Value)),
-                    sameLocation: @Html.Raw(Json.Serialize(L["Validation_SameLocation"].Value)),
-                    pastDate: @Html.Raw(Json.Serialize(L["Validation_PastDate"].Value))
-                }
-            });
-
             // Yüklenemeyen firma logolarını ve olanak ikonlarını gizler. Inline
             // onerror yerine burada bağlanıyor; işaretleme temiz kalsın.
             //

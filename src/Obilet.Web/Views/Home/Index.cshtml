@@ -1,6 +1,5 @@
 @using System.Globalization
 @using Microsoft.Extensions.Localization
-@using Obilet.Application.Locations
 @using Obilet.Web
 @model JourneySearchViewModel
 @inject IStringLocalizer<SharedResource> L
@@ -10,8 +9,6 @@
     var today = Model.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
     var tomorrow = Model.Today.AddDays(1).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
     var selectedDate = Model.DepartureDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-    var minQueryLength = ILocationService.MinimumQueryLength;
-
     // Olanak şeridi: dört maddenin ikonu ve metin anahtarları birlikte
     // duruyor, böylece işaretleme dört kez tekrarlanmıyor.
     var valueItems = new[]
@@ -186,39 +183,19 @@
 
 
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/js/tom-select.complete.min.js"></script>
-    <script src="~/js/search-form.js" asp-append-version="true"></script>
-    <script src="~/js/search-fields.js" asp-append-version="true"></script>
-    <script>
-        // Alanların davranisi search-fields.js icinde; ayni kod sefer
-        // listesi sayfasinda da kullaniliyor. Burada yalnizca bu sayfaya ait
-        // kimlikler ve metinler veriliyor.
-        window.ObiletSearchFields.init({
-            formId: 'search-form',
-            originId: 'origin',
-            destinationId: 'destination',
-            dateId: 'departure-date',
-            swapId: 'swap',
-            summaryId: 'validation-summary',
-            noticeId: 'date-adjusted-notice',
-            chipIds: { today: 'chip-today', tomorrow: 'chip-tomorrow' },
+    @*
+        Alanların davranışı _SearchFieldsScripts içinde; aynı partial sefer
+        listesi sayfasında da kullanılıyor. Buradan yalnızca iki sayfa
+        arasında farklılaşan değerler geçiliyor.
 
-            // Ana sayfa son aramayi depodan geri yukler: kullanicinin
-            // buraya gelmesinin sebebi yeni bir arama yapmak ve en olasi
-            // baslangic noktasi son aramasi.
-            restore: true,
-
-            minQueryLength: @minQueryLength,
-            searchUrl: '@Url.Action("Search", "Locations")',
-            today: '@today',
-            tomorrow: '@tomorrow',
-            messages: {
-                noResults: @Html.Raw(Json.Serialize(L["Search_NoResults"].Value)),
-                typeMore: @Html.Raw(Json.Serialize(L["Search_TypeMoreFormat", minQueryLength].Value)),
-                placeholder: @Html.Raw(Json.Serialize(L["Search_Placeholder"].Value)),
-                sameLocation: @Html.Raw(Json.Serialize(L["Validation_SameLocation"].Value)),
-                pastDate: @Html.Raw(Json.Serialize(L["Validation_PastDate"].Value))
-            }
-        });
-    </script>
+        Ana sayfa son aramayı depodan geri yükler: kullanıcının buraya
+        gelmesinin sebebi yeni bir arama yapmak ve en olası başlangıç
+        noktası son araması. Eskimiş bir tarih ileriye çekildiğinde
+        uyarının gösterileceği öğe de yalnızca bu sayfada var.
+    *@
+    <partial name="_SearchFieldsScripts"
+             model='new SearchFieldsScripts(
+                 Today: Model.Today,
+                 RestoreLastSearch: true,
+                 NoticeElementId: "date-adjusted-notice")' />
 }
